@@ -32,7 +32,7 @@ except KeyError:
     st.error("System configuration missing. Access offline.")
     st.stop()
 
-# 3. Disguised Secure Password Protection Interface
+# 3. Disguised Secure Password Protection Interface (No mention of AI or names)
 if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
 
@@ -67,7 +67,7 @@ free_models_to_try = [
     "openrouter/free"                   
 ]
 
-# Shared Global Languages Array
+# Shared Global Languages Array (100+ Master List)
 global_languages_list = [
     "French", "Spanish", "German", "Chinese (Simplified)", "Chinese (Traditional)", "Arabic", 
     "Japanese", "Italian", "Portuguese", "Hindi", "Korean", "Russian", "Turkish", "Afrikaans", 
@@ -87,9 +87,9 @@ global_languages_list = [
     "Vietnamese", "Welsh", "Xhosa", "Yiddish", "Yoruba", "Zulu"
 ]
 
-# 5. Sidebar Navigation
+# 5. Sidebar Navigation & Active Recent Chats Management
 with st.sidebar:
-    st.error("⚠️ **CRITICAL WARNING:** Exiting, refreshing, or closing this browser tab will permanently delete all history!")
+    st.error("⚠️ **CRITICAL WARNING:** Exiting, refreshing, or closing this browser tab will permanently delete all chat history and active sessions!")
     st.markdown("---")
     
     st.title("🤖 Navigation")
@@ -100,6 +100,7 @@ with st.sidebar:
     
     st.markdown("---")
     
+    # CHATBOT TOOLS AND SAVED CHATS LIST
     if app_mode == "💬 Original Chatbot":
         st.subheader("📚 Recent Chats")
         
@@ -127,6 +128,7 @@ with st.sidebar:
                 st.rerun()
                 
         st.markdown("---")
+        
         st.subheader("⚙️ Chat Options")
         new_name = st.text_input("Rename current chat:", value=st.session_state.current_chat_title, key="rename_input")
         if st.button("✏️ Confirm Rename", use_container_width=True):
@@ -147,23 +149,24 @@ with st.sidebar:
             else:
                 st.warning("⚠️ You can't delete your last open chat room!")
                 
+        st.markdown("---")
+        
     if st.button("🛑 Force Stop AI", use_container_width=True):
         st.session_state.stop_generation = True
         st.toast("Stopping generation...")
 
-# Current Chat Logic
+# Guarantee active key exists to prevent edge-case crashing
 if st.session_state.current_chat_title not in st.session_state.all_chats:
     st.session_state.current_chat_title = list(st.session_state.all_chats.keys())[0]
 active_messages = st.session_state.all_chats[st.session_state.current_chat_title]
 
-# Fixed AI Stream Function
+# Shared processing function to execute global API streams dynamically
 def run_ai_stream(messages_payload, placeholder):
     global free_models_to_try
     response_stream = None
     for model_slug in free_models_to_try:
         try:
             client_kwargs = {"model": model_slug, "messages": messages_payload, "stream": True}
-            # FIXED: Removed the space between 'com' and 'pletions'
             response_stream = client.chat.completions.create(**client_kwargs)
             break
         except Exception:
@@ -184,22 +187,21 @@ def run_ai_stream(messages_payload, placeholder):
             st.error(f"Streaming Error: {e}")
             return None
     else:
-        st.error("All free models are currently busy. Try again shortly!")
+        st.error("All free models are currently heavily loaded. Try again shortly!")
         return None
 
 # =====================================================================
-# MODES
+# MODE 1: ORIGINAL CHATBOT
 # =====================================================================
-
 if app_mode == "💬 Original Chatbot":
-    st.title("🤖 Artificial Intelligence")
-    st.caption(f"Room: **{st.session_state.current_chat_title}**")
+    st.title("🤖 Anas Intelligence 👍")
+    st.caption(f"Currently Viewing Room: **{st.session_state.current_chat_title}**")
 
     for message in active_messages:
         with st.chat_message(message["role"]):
             st.write(message["content"])
 
-    if user_input := st.chat_input("Ask Artificial Intelligence something..."):
+    if user_input := st.chat_input("Ask Anas Intelligence something..."):
         st.session_state.stop_generation = False
         active_messages.append({"role": "user", "content": user_input})
         with st.chat_message("user"):
@@ -212,94 +214,174 @@ if app_mode == "💬 Original Chatbot":
                 if reply:
                     active_messages.append({"role": "assistant", "content": reply})
 
+# =====================================================================
+# MODE 2: TEXT HUMANIZER (WITH FORMAL, CHILL, & STUDENT MODES)
+# =====================================================================
 elif app_mode == "📝 Text Humanizer":
-    st.title("📝 Artificial Intelligence - Humanizer Mode")
+    st.title("📝 Anas Intelligence - Humanizer Mode")
+    st.write("Paste paragraphs below to rewrite them with a fluid, natural human flow.")
+
     col1, col2 = st.columns(2, gap="large")
     with col1:
-        user_paragraphs = st.text_area("Paste text here:", height=300, key="humanizer_area")
-        humanizer_style = st.selectbox("Style Mode:", ["Formal", "Chill", "Student"])
+        user_paragraphs = st.text_area("Paste text or essay here:", height=300, placeholder="Paste text here...", key="humanizer_area")
+        
+        # Style Profile Dropdown
+        humanizer_style = st.selectbox("Choose Style Mode:", ["Formal", "Chill", "Student"])
+        
         submit_button = st.button("✨ Humanize Text", type="primary", use_container_width=True)
 
     with col2:
         output_placeholder = st.empty()
-        if submit_button and user_paragraphs.strip():
-            st.session_state.stop_generation = False
-            with st.spinner("Rewriting..."):
-                if humanizer_style == "Formal":
-                    style_instruction = "highly professional, sophisticated, and fluid."
-                elif humanizer_style == "Chill":
-                    style_instruction = "conversational, relaxed, and natural."
-                else:
-                    style_instruction = "intelligent student perspective, clear and straightforward."
-                
-                instr = f"You are a human editor. Rewrite this to be {style_instruction} Preserve all facts."
-                payload = [{"role": "system", "content": instr}, {"role": "user", "content": user_paragraphs}]
-                run_ai_stream(payload, output_placeholder)
+        output_placeholder.info("Your humanized text will stream here...")
 
+    if submit_button and user_paragraphs.strip():
+        st.session_state.stop_generation = False
+        with col2, st.spinner("Rewriting..."):
+            
+            # Adjust instructions based on the user's style selection
+            if humanizer_style == "Formal":
+                style_instruction = (
+                    "Rewrite the text to make it sound highly professional, sophisticated, and fluid. "
+                    "Use precise and academic vocabulary, eliminate awkward phrasing or robotic patterns, "
+                    "and maintain a structured, authoritative, yet completely natural tone."
+                )
+            elif humanizer_style == "Chill":
+                style_instruction = (
+                    "Rewrite the text to sound completely casual, conversational, and relaxed. "
+                    "Use simple vocabulary, blend varied sentence structures naturally, and phrase items "
+                    "exactly like a real human would explain something to a close friend in a relaxed chat, "
+                    "without using stiff or artificial textbook speech."
+                )
+            else: # Student
+                style_instruction = (
+                    "Rewrite the text from the perspective of an intelligent high school or university student. "
+                    "Keep it clear, straightforward, and readable. Avoid overly complex, archaic words that sound like AI, "
+                    "but don't make it unprofessional either. Make it sound like an authentic student assignment or response."
+                )
+                
+            instr = f"You are an expert human editor. {style_instruction} Make sure to preserve all key factual data accurately."
+            payload = [{"role": "system", "content": instr}, {"role": "user", "content": user_paragraphs}]
+            run_ai_stream(payload, output_placeholder)
+
+# =====================================================================
+# MODE 3: SMART SUMMARIZER
+# =====================================================================
 elif app_mode == "📊 Smart Summarizer":
-    st.title("📊 Artificial Intelligence - Smart Summarizer")
+    st.title("📊 Anas Intelligence - Smart Summarizer")
+    st.write("Turn huge documents or notes into scannable key points.")
+
     col1, col2 = st.columns(2, gap="large")
     with col1:
-        heavy_text = st.text_area("Paste material:", height=350, key="summary_area")
+        heavy_text = st.text_area("Paste material here:", height=350, placeholder="Paste details here...", key="summary_area")
         summarize_button = st.button("⚡ Extract Insights", type="primary", use_container_width=True)
 
     with col2:
         summary_placeholder = st.empty()
-        if summarize_button and heavy_text.strip():
-            st.session_state.stop_generation = False
-            with st.spinner("Analyzing..."):
-                instr = "Process text and return: ## 📋 Executive Summary, ## 🔑 Key Takeaways, ## 🧠 Core Terms."
-                payload = [{"role": "system", "content": instr}, {"role": "user", "content": heavy_text}]
-                run_ai_stream(payload, summary_placeholder)
+        summary_placeholder.info("The summary breakdown will generate here...")
 
+    if summarize_button and heavy_text.strip():
+        st.session_state.stop_generation = False
+        with col2, st.spinner("Analyzing data..."):
+            instr = "You are an elite analyst. Process the text and return a summary formatted exactly with sections: ## 📋 Executive Summary, ## 🔑 Key Takeaways, and ## 🧠 Core Terms & Concepts."
+            payload = [{"role": "system", "content": instr}, {"role": "user", "content": heavy_text}]
+            run_ai_stream(payload, summary_placeholder)
+
+# =====================================================================
+# MODE 4: AI TRANSLATOR (100+ GLOBAL & REGIONAL LANGUAGES)
+# =====================================================================
 elif app_mode == "🌐 AI Translator":
-    st.title("🌐 Artificial Intelligence - Universal AI Translator")
+    st.title("🌐 Anas Intelligence - Universal AI Translator")
+    st.write("Translate source text into any global language using specific style profiles.")
+
     col1, col2 = st.columns(2, gap="large")
     with col1:
-        src_text = st.text_area("Translate this:", height=250, key="trans_area")
-        target_lang = st.selectbox("Target Language:", global_languages_list)
-        translation_style = st.selectbox("Tone:", ["Literal/Exact", "Natural/Casual", "Formal/Business"])
+        src_text = st.text_area("Text to Translate:", height=250, placeholder="Type or paste text here...", key="trans_area")
+        
+        lang_col, style_col = st.columns(2)
+        with lang_col:
+            target_lang = st.selectbox("Target Language:", global_languages_list, index=0) # Default to French
+        with style_col:
+            translation_style = st.selectbox("Tone/Style Profile:", ["Literal/Exact", "Natural/Casual", "Formal/Business"])
+            
         translate_button = st.button("🚀 Translate Text", type="primary", use_container_width=True)
 
     with col2:
         trans_placeholder = st.empty()
-        if translate_button and src_text.strip():
-            st.session_state.stop_generation = False
-            with st.spinner("Translating..."):
-                instr = f"Translate to {target_lang} in a {translation_style} style."
-                payload = [{"role": "system", "content": instr}, {"role": "user", "content": src_text}]
-                run_ai_stream(payload, trans_placeholder)
+        trans_placeholder.info("Your AI translation will stream here...")
 
+    if translate_button and src_text.strip():
+        st.session_state.stop_generation = False
+        with col2, st.spinner("Translating text..."):
+            instr = f"You are a professional multilingual translator. Translate the user's text into {target_lang}. Adjust your vocabulary selection and grammatical phrasing to match a '{translation_style}' stylistic profile."
+            payload = [{"role": "system", "content": instr}, {"role": "user", "content": src_text}]
+            run_ai_stream(payload, trans_placeholder)
+
+# =====================================================================
+# MODE 5: MULTILINGUAL FLASHCARD GENERATOR (UP TO 100 CARDS)
+# =====================================================================
 elif app_mode == "🧠 Flashcard Generator":
-    st.title("🧠 Artificial Intelligence - Smart Flashcard Engine")
+    st.title("🧠 Anas Intelligence - Smart Flashcard Engine")
+    st.write("Input your raw material in English, select your targets, and forge custom multi-language flashcards.")
+
     col1, col2 = st.columns(2, gap="large")
     with col1:
-        raw_notes = st.text_area("English Notes:", height=240, key="flash_area")
-        study_lang = st.selectbox("Flashcard Language:", global_languages_list, key="f_lang")
-        num_cards = st.slider("Number of cards:", 1, 100, 5)
-        generate_cards_btn = st.button("🃏 Forge Cards", type="primary", use_container_width=True)
+        raw_notes = st.text_area("Paste Study Material/Prompts (in English):", height=240, placeholder="Type topic ideas or paste English notes here...", key="flash_area")
+        
+        f_lang_col, f_num_col = st.columns(2)
+        with f_lang_col:
+            study_lang = st.selectbox("Flashcard Language:", global_languages_list, index=0, key="flash_lang_select") # Default to French
+        with f_num_col:
+            num_cards = st.slider("Number of flashcards to forge:", min_value=1, max_value=100, value=5)
+            
+        generate_cards_btn = st.button("🃏 Forge Study Flashcards", type="primary", use_container_width=True)
         
     with col2:
-        st.markdown("### 🗂️ Study Deck")
+        st.markdown("### 🗂️ Study Deck Display")
+        
+        # Action toggles for hidden/visible answers
         t_col1, t_col2 = st.columns(2)
-        if t_col1.button("👁️ Show All"): st.session_state.show_answers = True
-        if t_col2.button("🙈 Hide All"): st.session_state.show_answers = False
+        with t_col1:
+            if st.button("👁️ Show All Answers", use_container_width=True):
+                st.session_state.show_answers = True
+        with t_col2:
+            if st.button("🙈 Hide All Answers", use_container_width=True):
+                st.session_state.show_answers = False
 
         st.markdown("---")
-        cards_display = st.empty()
+        cards_display_placeholder = st.empty()
         
+        # Render current generation cache out of storage state safely
         if st.session_state.flashcard_content:
-            content = st.session_state.flashcard_content
-            if not st.session_state.show_answers:
-                content = content.replace("ANSWER:", "||**ANSWER:**").replace("\n\n#", "||\n\n#")
-            cards_display.markdown(content)
+            if st.session_state.show_answers:
+                cards_display_placeholder.markdown(st.session_state.flashcard_content)
+            else:
+                # Mask answer blocks using markdown spoiler syntax
+                masked_content = st.session_state.flashcard_content.replace("ANSWER:", "||**ANSWER:**").replace("\n\n#", "||\n\n#")
+                if "||" in masked_content and not masked_content.endswith("||"):
+                    masked_content += "||"
+                cards_display_placeholder.markdown(masked_content)
+        else:
+            cards_display_placeholder.info("Your translated study deck will build here. Click individual answers to reveal them or use the toggles!")
 
     if generate_cards_btn and raw_notes.strip():
         st.session_state.stop_generation = False
-        with st.spinner("Generating..."):
-            instr = f"Generate {num_cards} cards in {study_lang}. Format: ### 🃏 FLASHCARD X, **QUESTION:**, **ANSWER:**"
-            payload = [{"role": "system", "content": instr}, {"role": "user", "content": raw_notes}]
-            final_deck = run_ai_stream(payload, cards_display)
-            if final_deck:
-                st.session_state.flashcard_content = final_deck
-                st.rerun()
+        st.session_state.show_answers = False
+        with col2:
+            with st.spinner(f"Processing English material and translation to {study_lang}..."):
+                instr = (
+                    f"You are an elite academic flashcard generator and language expert. Read the user's English material "
+                    f"and generate exactly {num_cards} distinct flashcards to help study. "
+                    f"CRITICAL: The entire content of the flashcards (both questions and answers) MUST be written completely in {study_lang}. "
+                    f"Translate the underlying English context seamlessly.\n\n"
+                    f"Follow this strict layout formatting for every single card:\n\n"
+                    f"### 🃏 FLASHCARD X\n"
+                    f"**QUESTION:** (Write question here in {study_lang})\n"
+                    f"**ANSWER:** (Write answer here in {study_lang})\n\n"
+                    f"Do not include any greeting or conversational fluff, return only the formatted cards."
+                )
+                payload = [{"role": "system", "content": instr}, {"role": "user", "content": raw_notes}]
+                
+                final_deck = run_ai_stream(payload, cards_display_placeholder)
+                if final_deck:
+                    st.session_state.flashcard_content = final_deck
+                    st.rerun()
