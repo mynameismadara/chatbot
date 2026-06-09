@@ -63,6 +63,10 @@ free_models_to_try = [
 
 # 5. Sidebar Navigation & Active Recent Chats Management
 with st.sidebar:
+    # ⚠️ EXIT WARNING ADDED AT THE VERY TOP OF THE SIDEBAR
+    st.error("⚠️ **CRITICAL WARNING:** Exiting, refreshing, or closing this browser tab will permanently delete all chat history and active sessions!")
+    st.markdown("---")
+    
     st.title("🤖 Navigation")
     app_mode = st.selectbox("Choose Mode:", ["💬 Original Chatbot", "📝 Text Humanizer"])
     
