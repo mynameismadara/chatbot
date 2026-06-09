@@ -2,19 +2,21 @@ import streamlit as st
 from openai import OpenAI
 
 # 1. Title of your web app
-st.title("💬 My AI Chatbot")
-st.write("Welcome! Ask me anything.")
+st.title("💬 My OpenRouter AI Chatbot")
+st.write("Running completely free using open-source models!")
 
 # 2. Securely get the API key from Streamlit's Secrets manager
-# This prevents the "Incorrect API key" error by pulling directly from your settings box.
 try:
     api_key_from_secrets = st.secrets["OPENAI_API_KEY"]
 except KeyError:
     st.error("Missing API Key! Please add OPENAI_API_KEY to your Streamlit Advanced Settings -> Secrets.")
     st.stop()
 
-# 3. Initialize the OpenAI client
-client = OpenAI(api_key=api_key_from_secrets)
+# 3. Initialize the client to talk to OpenRouter instead of OpenAI
+client = OpenAI(
+    base_url="https://openrouter.ai/api/v1",  # Tells the code to redirect to OpenRouter's servers
+    api_key=api_key_from_secrets
+)
 
 # 4. Initialize the chat history if it doesn't exist yet
 if "messages" not in st.session_state:
@@ -39,7 +41,7 @@ if user_input := st.chat_input("Type your message here..."):
         with st.spinner("Thinking..."):
             try:
                 response = client.chat.completions.create(
-                    model="gpt-4o-mini",  # Fast, smart, and efficient model
+                    model="openrouter/free",  # Automatically uses the best available free model
                     messages=[
                         {"role": m["role"], "content": m["content"]}
                         for m in st.session_state.messages
