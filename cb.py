@@ -2,7 +2,7 @@ import streamlit as st
 from openai import OpenAI
 
 # 1. Page Configuration
-st.set_page_config(page_title="Ultra-Fast Chatbot", page_icon="⚡")
+st.set_page_config(page_title="Anas Intelligence", page_icon="🤖")
 
 # 2. Check for required secrets
 try:
@@ -33,8 +33,8 @@ if not st.session_state.authenticated:
 # =====================================================================
 
 # 4. Title of your web app
-st.title("⚡ My Private Lightning-Fast Chatbot")
-st.write("Equipped with high-throughput, low-latency free models!")
+st.title("🤖 Anas Intelligence 👍")
+st.write("Welcome to your private, high-speed AI assistant.")
 
 # 5. Initialize the client to talk to OpenRouter
 client = OpenAI(
@@ -45,7 +45,7 @@ client = OpenAI(
 # 6. Initialize the chat history if it doesn't exist yet
 if "messages" not in st.session_state:
     st.session_state.messages = [
-        {"role": "assistant", "content": "Hello! The speed engine is active. Ask me anything!"}
+        {"role": "assistant", "content": "Hello! Anas Intelligence is online and ready. How can I help you today?"}
     ]
 
 # 7. Display all previous messages on the screen
@@ -54,7 +54,7 @@ for message in st.session_state.messages:
         st.write(message["content"])
 
 # 8. Handle new user input
-if user_input := st.chat_input("Type your message here..."):
+if user_input := st.chat_input("Ask Anas Intelligence something..."):
     # Display user message
     st.session_state.messages.append({"role": "user", "content": user_input})
     with st.chat_message("user"):
@@ -64,12 +64,12 @@ if user_input := st.chat_input("Type your message here..."):
     with st.chat_message("assistant"):
         with st.spinner("Thinking..."):
             
-            # REORDERED FOR SPEED: Putting the fastest low-latency models first!
+            # Fast, low-latency free models
             free_models_to_try = [
-                "meta-llama/llama-4-scout:free",     # Turbo-speed lightweight model
-                "openai/gpt-oss-20b:free",          # High-speed low-latency option
+                "meta-llama/llama-4-scout:free",     
+                "openai/gpt-oss-20b:free",          
                 "meta-llama/llama-3.2-3b-instruct:free",
-                "openrouter/free"                   # Final catch-all fallback
+                "openrouter/free"                   
             ]
             
             response_stream = None
