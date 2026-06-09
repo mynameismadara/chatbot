@@ -1,12 +1,12 @@
 import streamlit as st
 from openai import OpenAI
 
-# 1. Page Configuration (Generic title to hide AI footprint on the outside)
+# 1. Page Configuration
 st.set_page_config(page_title="Private Portal", page_icon="🔒", layout="wide")
 
 # Initialize Master Chat Storage to track multiple conversations
 if "all_chats" not in st.session_state:
-    st.session_state.all_chats = {}  # Format: { "Chat Title": [messages_list] }
+    st.session_state.all_chats = {}  
 if "current_chat_title" not in st.session_state:
     st.session_state.current_chat_title = "Chat 1"
 if "stop_generation" not in st.session_state:
@@ -26,7 +26,7 @@ except KeyError:
     st.error("System configuration missing. Access offline.")
     st.stop()
 
-# 3. Disguised Secure Password Protection Interface (No mention of AI)
+# 3. Disguised Secure Password Protection Interface
 if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
 
@@ -63,12 +63,12 @@ free_models_to_try = [
 
 # 5. Sidebar Navigation & Active Recent Chats Management
 with st.sidebar:
-    # ⚠️ EXIT WARNING ADDED AT THE VERY TOP OF THE SIDEBAR
     st.error("⚠️ **CRITICAL WARNING:** Exiting, refreshing, or closing this browser tab will permanently delete all chat history and active sessions!")
     st.markdown("---")
     
     st.title("🤖 Navigation")
-    app_mode = st.selectbox("Choose Mode:", ["💬 Original Chatbot", "📝 Text Humanizer"])
+    # Added the 3rd option right into your main control dropdown
+    app_mode = st.selectbox("Choose Mode:", ["💬 Original Chatbot", "📝 Text Humanizer", "📊 Smart Summarizer"])
     
     st.markdown("---")
     
@@ -76,11 +76,10 @@ with st.sidebar:
     if app_mode == "💬 Original Chatbot":
         st.subheader("📚 Recent Chats")
         
-        # Button to start a completely new blank chat session
         if st.button("➕ New Chat", use_container_width=True):
             new_chat_num = len(st.session_state.all_chats) + 1
             new_title = f"Chat {new_chat_num}"
-            while new_title in st.session_state.all_chats:  # Prevent overwriting
+            while new_title in st.session_state.all_chats:  
                 new_chat_num += 1
                 new_title = f"Chat {new_chat_num}"
                 
@@ -90,9 +89,8 @@ with st.sidebar:
             st.session_state.current_chat_title = new_title
             st.rerun()
             
-        st.write("") # Spacer
+        st.write("") 
         
-        # List out all active recent chat sessions as clickable buttons
         for chat_title in list(st.session_state.all_chats.keys()):
             is_current = (chat_title == st.session_state.current_chat_title)
             button_label = f"💬 {chat_title}" if not is_current else f"👉 {chat_title}"
@@ -103,11 +101,7 @@ with st.sidebar:
                 
         st.markdown("---")
         
-        # CHAT RE-NAME & DELETE PANEL
         st.subheader("⚙️ Chat Options")
-        st.caption(f"Modifying: **{st.session_state.current_chat_title}**")
-        
-        # Rename Input
         new_name = st.text_input("Rename current chat:", value=st.session_state.current_chat_title, key="rename_input")
         if st.button("✏️ Confirm Rename", use_container_width=True):
             if new_name.strip() and new_name != st.session_state.current_chat_title:
@@ -118,7 +112,6 @@ with st.sidebar:
                     st.session_state.current_chat_title = new_name
                     st.rerun()
                     
-        # Delete Button
         if st.button("🗑️ Delete Current Chat", use_container_width=True, type="secondary"):
             if len(st.session_state.all_chats) > 1:
                 old_title = st.session_state.current_chat_title
@@ -134,33 +127,28 @@ with st.sidebar:
         st.session_state.stop_generation = True
         st.toast("Stopping generation...")
 
-# Guarantee active key exists to prevent crashing
+# Guarantee active key exists
 if st.session_state.current_chat_title not in st.session_state.all_chats:
     st.session_state.current_chat_title = list(st.session_state.all_chats.keys())[0]
 active_messages = st.session_state.all_chats[st.session_state.current_chat_title]
 
 # =====================================================================
-# MODE 1: ORIGINAL CHATBOT WITH HISTORICAL RECENT CHATS
+# MODE 1: ORIGINAL CHATBOT
 # =====================================================================
 if app_mode == "💬 Original Chatbot":
     st.title("🤖 Anas Intelligence 👍")
     st.caption(f"Currently Viewing Room: **{st.session_state.current_chat_title}**")
 
-    # Display previous chat messages from this specific selected room
     for message in active_messages:
         with st.chat_message(message["role"]):
             st.write(message["content"])
 
-    # Handle new user chat input
     if user_input := st.chat_input("Ask Anas Intelligence something..."):
         st.session_state.stop_generation = False
-        
-        # Save user message into our current history array
         active_messages.append({"role": "user", "content": user_input})
         with st.chat_message("user"):
             st.write(user_input)
 
-        # Generate assistant response
         with st.chat_message("assistant"):
             with st.spinner("Thinking..."):
                 response_stream = None
@@ -187,9 +175,7 @@ if app_mode == "💬 Original Chatbot":
                             if chunk.choices[0].delta.content:
                                 full_response += chunk.choices[0].delta.content
                                 message_placeholder.markdown(full_response + "▌")
-                        
                         message_placeholder.markdown(full_response)
-                        # Save final reply straight into our active chat thread storage array
                         active_messages.append({"role": "assistant", "content": full_response})
                     except Exception as e:
                         st.error(f"Error: {e}")
@@ -204,10 +190,9 @@ elif app_mode == "📝 Text Humanizer":
     st.write("Paste long paragraphs below to rewrite them with a fluid, natural human flow.")
 
     col1, col2 = st.columns(2, gap="large")
-
     with col1:
         st.markdown("### 📤 Input Paragraphs")
-        user_paragraphs = st.text_area("Paste your text or essay here:", height=350, placeholder="Type or paste paragraphs here...")
+        user_paragraphs = st.text_area("Paste your text or essay here:", height=350, placeholder="Type or paste paragraphs here...", key="humanizer_area")
         submit_button = st.button("✨ Humanize Text", type="primary", use_container_width=True)
 
     with col2:
@@ -217,15 +202,12 @@ elif app_mode == "📝 Text Humanizer":
 
     if submit_button and user_paragraphs.strip():
         st.session_state.stop_generation = False
-        
         with col2:
             with st.spinner("Analyzing text flow and rewriting..."):
                 humanizer_instructions = (
                     "You are an expert human editor. Rewrite the user's text to make it sound completely natural, "
-                    "fluid, and engaging, as if written by an authentic human author. Vary sentence lengths, improve "
-                    "flow, use natural transitions, and eliminate typical robotic patterns while keeping the exact original facts."
+                    "fluid, and engaging. Vary sentence lengths, improve flow, and eliminate robotic patterns."
                 )
-                
                 response_stream = None
                 for model_slug in free_models_to_try:
                     try:
@@ -241,7 +223,6 @@ elif app_mode == "📝 Text Humanizer":
                         break
                     except Exception:
                         continue
-                
                 if response_stream is not None:
                     try:
                         full_response = ""
@@ -252,9 +233,68 @@ elif app_mode == "📝 Text Humanizer":
                             if chunk.choices[0].delta.content:
                                 full_response += chunk.choices[0].delta.content
                                 output_placeholder.markdown(full_response + "▌")
-                        
                         output_placeholder.markdown(full_response)
                     except Exception as e:
                         st.error(f"Error: {e}")
                 else:
-                    st.error("All free models are currently busy. Please try again in a moment!")
+                    st.error("All free models are currently busy!")
+
+# =====================================================================
+# NEW MODE 3: SMART SUMMARIZER & EXTRACTOR
+# =====================================================================
+elif app_mode == "📊 Smart Summarizer":
+    st.title("📊 Anas Intelligence - Smart Summarizer")
+    st.write("Turn huge text documents, articles, or notes into scannable, key-point breakdowns.")
+
+    col1, col2 = st.columns(2, gap="large")
+    with col1:
+        st.markdown("### 📤 Input Document Text")
+        heavy_text = st.text_area("Paste your long reading material here:", height=350, placeholder="Paste heavy articles or notes here...", key="summary_area")
+        summarize_button = st.button("⚡ Extract Insights", type="primary", use_container_width=True)
+
+    with col2:
+        st.markdown("### 📥 Scannable Breakdown")
+        summary_placeholder = st.empty()
+        summary_placeholder.info("The summary dashboard will build out here word-by-word...")
+
+    if summarize_button and heavy_text.strip():
+        st.session_state.stop_generation = False
+        with col2:
+            with st.spinner("Processing document data..."):
+                summarizer_instructions = (
+                    "You are an elite data analyst. Process the user's heavy text and return a beautifully formatted "
+                    "summary. Structure it exactly like this:\n"
+                    "## 📋 Executive Summary\n(A brief 2-3 sentence overview)\n\n"
+                    "## 🔑 Key Takeaways\n(A clean bulleted list of the most critical facts)\n\n"
+                    "## 🧠 Core Terms & Concepts\n(Define any complex vocabulary or central ideas present)"
+                )
+                response_stream = None
+                for model_slug in free_models_to_try:
+                    try:
+                        client_kwargs = {
+                            "model": model_slug,
+                            "messages": [
+                                {"role": "system", "content": summarizer_instructions},
+                                {"role": "user", "content": f"Summarize this text:\n\n{heavy_text}"}
+                            ],
+                            "stream": True
+                        }
+                        response_stream = client.chat.completions.create(**client_kwargs)
+                        break
+                    except Exception:
+                        continue
+                if response_stream is not None:
+                    try:
+                        full_response = ""
+                        for chunk in response_stream:
+                            if st.session_state.stop_generation:
+                                full_response += "\n\n[Generation Stopped by User]"
+                                break
+                            if chunk.choices[0].delta.content:
+                                full_response += chunk.choices[0].delta.content
+                                summary_placeholder.markdown(full_response + "▌")
+                        summary_placeholder.markdown(full_response)
+                    except Exception as e:
+                        st.error(f"Error: {e}")
+                else:
+                    st.error("All free models are currently busy!")
