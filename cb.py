@@ -215,7 +215,7 @@ if app_mode == "💬 Original Chatbot":
                     active_messages.append({"role": "assistant", "content": reply})
 
 # =====================================================================
-# MODE 2: TEXT HUMANIZER
+# MODE 2: TEXT HUMANIZER (WITH FORMAL, CHILL, & STUDENT MODES)
 # =====================================================================
 elif app_mode == "📝 Text Humanizer":
     st.title("📝 Anas Intelligence - Humanizer Mode")
@@ -223,7 +223,11 @@ elif app_mode == "📝 Text Humanizer":
 
     col1, col2 = st.columns(2, gap="large")
     with col1:
-        user_paragraphs = st.text_area("Paste text or essay here:", height=350, placeholder="Paste text here...", key="humanizer_area")
+        user_paragraphs = st.text_area("Paste text or essay here:", height=300, placeholder="Paste text here...", key="humanizer_area")
+        
+        # Style Profile Dropdown
+        humanizer_style = st.selectbox("Choose Style Mode:", ["Formal", "Chill", "Student"])
+        
         submit_button = st.button("✨ Humanize Text", type="primary", use_container_width=True)
 
     with col2:
@@ -233,7 +237,29 @@ elif app_mode == "📝 Text Humanizer":
     if submit_button and user_paragraphs.strip():
         st.session_state.stop_generation = False
         with col2, st.spinner("Rewriting..."):
-            instr = "You are an expert human editor. Rewrite the text to make it sound completely natural, fluid, and engaging. Vary sentence lengths, eliminate typical robotic phrasing while protecting facts."
+            
+            # Adjust instructions based on the user's style selection
+            if humanizer_style == "Formal":
+                style_instruction = (
+                    "Rewrite the text to make it sound highly professional, sophisticated, and fluid. "
+                    "Use precise and academic vocabulary, eliminate awkward phrasing or robotic patterns, "
+                    "and maintain a structured, authoritative, yet completely natural tone."
+                )
+            elif humanizer_style == "Chill":
+                style_instruction = (
+                    "Rewrite the text to sound completely casual, conversational, and relaxed. "
+                    "Use simple vocabulary, blend varied sentence structures naturally, and phrase items "
+                    "exactly like a real human would explain something to a close friend in a relaxed chat, "
+                    "without using stiff or artificial textbook speech."
+                )
+            else: # Student
+                style_instruction = (
+                    "Rewrite the text from the perspective of an intelligent high school or university student. "
+                    "Keep it clear, straightforward, and readable. Avoid overly complex, archaic words that sound like AI, "
+                    "but don't make it unprofessional either. Make it sound like an authentic student assignment or response."
+                )
+                
+            instr = f"You are an expert human editor. {style_instruction} Make sure to preserve all key factual data accurately."
             payload = [{"role": "system", "content": instr}, {"role": "user", "content": user_paragraphs}]
             run_ai_stream(payload, output_placeholder)
 
