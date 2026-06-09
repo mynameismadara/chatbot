@@ -167,7 +167,7 @@ def run_ai_stream(messages_payload, placeholder):
     for model_slug in free_models_to_try:
         try:
             client_kwargs = {"model": model_slug, "messages": messages_payload, "stream": True}
-            response_stream = client.chat.completions.create(**client_kwargs)
+            response_stream = client.chat.com completions.create(**client_kwargs)
             break
         except Exception:
             continue
@@ -194,14 +194,14 @@ def run_ai_stream(messages_payload, placeholder):
 # MODE 1: ORIGINAL CHATBOT
 # =====================================================================
 if app_mode == "💬 Original Chatbot":
-    st.title("🤖 Anas Intelligence 👍")
+    st.title("🤖 Artificial Intelligence")
     st.caption(f"Currently Viewing Room: **{st.session_state.current_chat_title}**")
 
     for message in active_messages:
         with st.chat_message(message["role"]):
             st.write(message["content"])
 
-    if user_input := st.chat_input("Ask Anas Intelligence something..."):
+    if user_input := st.chat_input("Ask Artificial Intelligence something..."):
         st.session_state.stop_generation = False
         active_messages.append({"role": "user", "content": user_input})
         with st.chat_message("user"):
@@ -218,7 +218,7 @@ if app_mode == "💬 Original Chatbot":
 # MODE 2: TEXT HUMANIZER (WITH FORMAL, CHILL, & STUDENT MODES)
 # =====================================================================
 elif app_mode == "📝 Text Humanizer":
-    st.title("📝 Anas Intelligence - Humanizer Mode")
+    st.title("📝 Artificial Intelligence - Humanizer Mode")
     st.write("Paste paragraphs below to rewrite them with a fluid, natural human flow.")
 
     col1, col2 = st.columns(2, gap="large")
@@ -267,7 +267,7 @@ elif app_mode == "📝 Text Humanizer":
 # MODE 3: SMART SUMMARIZER
 # =====================================================================
 elif app_mode == "📊 Smart Summarizer":
-    st.title("📊 Anas Intelligence - Smart Summarizer")
+    st.title("📊 Artificial Intelligence - Smart Summarizer")
     st.write("Turn huge documents or notes into scannable key points.")
 
     col1, col2 = st.columns(2, gap="large")
@@ -290,7 +290,7 @@ elif app_mode == "📊 Smart Summarizer":
 # MODE 4: AI TRANSLATOR (100+ GLOBAL & REGIONAL LANGUAGES)
 # =====================================================================
 elif app_mode == "🌐 AI Translator":
-    st.title("🌐 Anas Intelligence - Universal AI Translator")
+    st.title("🌐 Artificial Intelligence - Universal AI Translator")
     st.write("Translate source text into any global language using specific style profiles.")
 
     col1, col2 = st.columns(2, gap="large")
@@ -320,7 +320,7 @@ elif app_mode == "🌐 AI Translator":
 # MODE 5: MULTILINGUAL FLASHCARD GENERATOR (UP TO 100 CARDS)
 # =====================================================================
 elif app_mode == "🧠 Flashcard Generator":
-    st.title("🧠 Anas Intelligence - Smart Flashcard Engine")
+    st.title("🧠 Artificial Intelligence - Smart Flashcard Engine")
     st.write("Input your raw material in English, select your targets, and forge custom multi-language flashcards.")
 
     col1, col2 = st.columns(2, gap="large")
