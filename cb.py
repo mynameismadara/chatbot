@@ -67,6 +67,26 @@ free_models_to_try = [
     "openrouter/free"                   
 ]
 
+# Shared Global Languages Array (100+ Master List)
+global_languages_list = [
+    "French", "Spanish", "German", "Chinese (Simplified)", "Chinese (Traditional)", "Arabic", 
+    "Japanese", "Italian", "Portuguese", "Hindi", "Korean", "Russian", "Turkish", "Afrikaans", 
+    "Albanian", "Amharic", "Armenian", "Azerbaijani", "Basque", "Belarusian", "Bengali", 
+    "Bosnian", "Bulgarian", "Burmese", "Catalan", "Cebuano", "Chichewa", "Corsican", 
+    "Croatian", "Czech", "Danish", "Dutch", "English", "Esperanto", "Estonian", 
+    "Filipino (Tagalog)", "Finnish", "Frisian", "Galician", "Georgian", "Greek", 
+    "Gujarati", "Haitian Creole", "Hausa", "Hawaiian", "Hebrew", "Hmong", "Hungarian", 
+    "Icelandic", "Igbo", "Indonesian", "Irish", "Javanese", "Kannada", "Kazakh", 
+    "Khmer", "Kinyarwanda", "Kurdish (Kurmanji)", "Kurdish (Sorani)", "Kyrgyz", "Lao", 
+    "Latin", "Latvian", "Lithuanian", "Luxembourgish", "Macedonian", "Malagasy", "Malay", 
+    "Malayalam", "Maltese", "Maori", "Marathi", "Mongolian", "Nepali", "Norwegian", 
+    "Odia (Oriya)", "Pashto", "Persian", "Polish", "Punjabi", "Romanian", "Samoan", 
+    "Scots Gaelic", "Serbian", "Sesotho", "Shona", "Sindhi", "Sinhala", "Slovak", 
+    "Slovenian", "Somali", "Sundanese", "Swahili", "Swedish", "Tajik", "Tamil", 
+    "Tatar", "Telugu", "Thai", "Turkmen", "Ukrainian", "Urdu", "Uyghur", "Uzbek", 
+    "Vietnamese", "Welsh", "Xhosa", "Yiddish", "Yoruba", "Zulu"
+]
+
 # 5. Sidebar Navigation & Active Recent Chats Management
 with st.sidebar:
     st.error("⚠️ **CRITICAL WARNING:** Exiting, refreshing, or closing this browser tab will permanently delete all chat history and active sessions!")
@@ -253,30 +273,7 @@ elif app_mode == "🌐 AI Translator":
         
         lang_col, style_col = st.columns(2)
         with lang_col:
-            target_lang = st.selectbox(
-                "Target Language:", 
-                [
-                    "Afrikaans", "Albanian", "Amharic", "Arabic", "Armenian", "Azerbaijani", 
-                    "Basque", "Belarusian", "Bengali", "Bosnian", "Bulgarian", "Burmese", 
-                    "Catalan", "Cebuano", "Chichewa", "Chinese (Simplified)", "Chinese (Traditional)", 
-                    "Corsican", "Croatian", "Czech", "Danish", "Dutch", "English", "Esperanto", 
-                    "Estonian", "Filipino (Tagalog)", "Finnish", "French", "Frisian", "Galician", 
-                    "Georgian", "German", "Greek", "Gujarati", "Haitian Creole", "Hausa", 
-                    "Hawaiian", "Hebrew", "Hindi", "Hmong", "Hungarian", "Icelandic", 
-                    "Igbo", "Indonesian", "Irish", "Italian", "Japanese", "Javanese", 
-                    "Kannada", "Kazakh", "Khmer", "Kinyarwanda", "Korean", "Kurdish (Kurmanji)", 
-                    "Kurdish (Sorani)", "Kyrgyz", "Lao", "Latin", "Latvian", "Lithuanian", 
-                    "Luxembourgish", "Macedonian", "Malagasy", "Malay", "Malayalam", "Maltese", 
-                    "Maori", "Marathi", "Mongolian", "Nepali", "Norwegian", "Odia (Oriya)", 
-                    "Pashto", "Persian", "Polish", "Portuguese", "Punjabi", "Romanian", 
-                    "Russian", "Samoan", "Scots Gaelic", "Serbian", "Sesotho", "Shona", 
-                    "Sindhi", "Sinhala", "Slovak", "Slovenian", "Somali", "Spanish", 
-                    "Sundanese", "Swahili", "Swedish", "Tajik", "Tamil", "Tatar", 
-                    "Telugu", "Thai", "Turkish", "Turkmen", "Ukrainian", "Urdu", 
-                    "Uyghur", "Uzbek", "Vietnamese", "Welsh", "Xhosa", "Yiddish", 
-                    "Yoruba", "Zulu"
-                ]
-            )
+            target_lang = st.selectbox("Target Language:", global_languages_list, index=0) # Default to French
         with style_col:
             translation_style = st.selectbox("Tone/Style Profile:", ["Literal/Exact", "Natural/Casual", "Formal/Business"])
             
@@ -294,16 +291,22 @@ elif app_mode == "🌐 AI Translator":
             run_ai_stream(payload, trans_placeholder)
 
 # =====================================================================
-# MODE 5: FLASHCARD GENERATOR
+# MODE 5: MULTILINGUAL FLASHCARD GENERATOR (UP TO 100 CARDS)
 # =====================================================================
 elif app_mode == "🧠 Flashcard Generator":
     st.title("🧠 Anas Intelligence - Smart Flashcard Engine")
-    st.write("Paste your raw study notes, definitions, or textbook materials below to forge structured study cards.")
+    st.write("Input your raw material in English, select your targets, and forge custom multi-language flashcards.")
 
     col1, col2 = st.columns(2, gap="large")
     with col1:
-        raw_notes = st.text_area("Paste Study Material/Notes:", height=280, placeholder="Paste definitions, raw class notes, or text details...", key="flash_area")
-        num_cards = st.slider("Number of flashcards to forge:", min_value=3, max_value=12, value=5)
+        raw_notes = st.text_area("Paste Study Material/Prompts (in English):", height=240, placeholder="Type topic ideas or paste English notes here...", key="flash_area")
+        
+        f_lang_col, f_num_col = st.columns(2)
+        with f_lang_col:
+            study_lang = st.selectbox("Flashcard Language:", global_languages_list, index=0, key="flash_lang_select") # Default to French
+        with f_num_col:
+            num_cards = st.slider("Number of flashcards to forge:", min_value=1, max_value=100, value=5)
+            
         generate_cards_btn = st.button("🃏 Forge Study Flashcards", type="primary", use_container_width=True)
         
     with col2:
@@ -332,20 +335,23 @@ elif app_mode == "🧠 Flashcard Generator":
                     masked_content += "||"
                 cards_display_placeholder.markdown(masked_content)
         else:
-            cards_display_placeholder.info("Your flashcards deck will print here. Click answers to reveal them individually or use toggle switches above!")
+            cards_display_placeholder.info("Your translated study deck will build here. Click individual answers to reveal them or use the toggles!")
 
     if generate_cards_btn and raw_notes.strip():
         st.session_state.stop_generation = False
         st.session_state.show_answers = False
         with col2:
-            with st.spinner("Extracting definitions and forging cards..."):
+            with st.spinner(f"Processing English material and translation to {study_lang}..."):
                 instr = (
-                    f"You are an academic flashcard generator. Extract the absolute core concepts from the user's material "
-                    f"and create exactly {num_cards} flashcards. Follow this strict formatting rule for every card:\n\n"
+                    f"You are an elite academic flashcard generator and language expert. Read the user's English material "
+                    f"and generate exactly {num_cards} distinct flashcards to help study. "
+                    f"CRITICAL: The entire content of the flashcards (both questions and answers) MUST be written completely in {study_lang}. "
+                    f"Translate the underlying English context seamlessly.\n\n"
+                    f"Follow this strict layout formatting for every single card:\n\n"
                     f"### 🃏 FLASHCARD X\n"
-                    f"**QUESTION:** (Clear concept question here)\n"
-                    f"**ANSWER:** (Precise concept answer here)\n\n"
-                    f"Do not add any introductory text, match the pattern perfectly."
+                    f"**QUESTION:** (Write question here in {study_lang})\n"
+                    f"**ANSWER:** (Write answer here in {study_lang})\n\n"
+                    f"Do not include any greeting or conversational fluff, return only the formatted cards."
                 )
                 payload = [{"role": "system", "content": instr}, {"role": "user", "content": raw_notes}]
                 
