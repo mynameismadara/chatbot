@@ -3,7 +3,7 @@ from openai import OpenAI
 
 # 1. Title of your web app
 st.title("💬 My OpenRouter AI Chatbot")
-st.write("Running completely free with live word streaming!")
+st.write("Running completely free with high-speed Gemini streaming!")
 
 # 2. Securely get the API key from Streamlit's Secrets manager
 try:
@@ -40,14 +40,14 @@ if user_input := st.chat_input("Type your message here..."):
     with st.chat_message("assistant"):
         with st.spinner("Thinking..."):
             try:
-                # Ask OpenRouter to stream the response chunk-by-chunk
+                # Ask OpenRouter to stream from a specific, ultra-fast free model
                 response_stream = client.chat.completions.create(
-                    model="openrouter/free",  # Automatically uses the best available free model
+                    model="google/gemini-2.5-flash:free",  # Target the high-speed free model directly
                     messages=[
                         {"role": m["role"], "content": m["content"]}
                         for m in st.session_state.messages
                     ],
-                    stream=True  # Tells the AI to send words instantly as they are generated
+                    stream=True  # Stream words instantly as they are generated
                 )
                 
                 # Use Streamlit's typewriter effect to display words instantly
