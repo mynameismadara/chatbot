@@ -67,7 +67,7 @@ with st.sidebar:
     
     st.markdown("---")
     
-    # ONLY SHOW RECENT CHATS HISTORY IF IN CHATBOT MODE
+    # CHATBOT MODE TOOLS
     if app_mode == "💬 Original Chatbot":
         st.subheader("📚 Recent Chats")
         
@@ -75,6 +75,10 @@ with st.sidebar:
         if st.button("➕ New Chat", use_container_width=True):
             new_chat_num = len(st.session_state.all_chats) + 1
             new_title = f"Chat {new_chat_num}"
+            while new_title in st.session_state.all_chats:  # Prevent overwriting
+                new_chat_num += 1
+                new_title = f"Chat {new_chat_num}"
+                
             st.session_state.all_chats[new_title] = [
                 {"role": "assistant", "content": "Hello! Started a brand new chat. What's on your mind?"}
             ]
@@ -85,9 +89,8 @@ with st.sidebar:
         
         # List out all active recent chat sessions as clickable buttons
         for chat_title in list(st.session_state.all_chats.keys()):
-            # Highlight the currently active chat room
             is_current = (chat_title == st.session_state.current_chat_title)
-            button_label = f"💬 {chat_title}" if not is_current else f"👉 {chat_title} (Active)"
+            button_label = f"💬 {chat_title}" if not is_current else f"👉 {chat_title}"
             
             if st.button(button_label, key=f"select_{chat_title}", use_container_width=True, type="secondary" if not is_current else "primary"):
                 st.session_state.current_chat_title = chat_title
@@ -95,11 +98,43 @@ with st.sidebar:
                 
         st.markdown("---")
         
+        # ⚙️ CHAT MANAGEMENT MANAGEMENT (RENAME & DELETE OPTIONS)
+        st.subheader("⚙️ Chat Options")
+        st.caption(f"Modifying: **{st.session_state.current_chat_title}**")
+        
+        # Rename Block
+        new_name = st.text_input("Rename current chat:", value=st.session_state.current_chat_title, key="rename_input")
+        if st.button("✏️ Confirm Rename", use_container_width=True):
+            if new_name.strip() and new_name != st.session_state.current_chat_title:
+                if new_name in st.session_state.all_chats:
+                    st.error("A chat room with that name already exists!")
+                else:
+                    # Move data to new key name and delete the old one
+                    st.session_state.all_chats[new_name] = st.session_state.all_chats.pop(st.session_state.current_chat_title)
+                    st.session_state.current_chat_title = new_name
+                    st.rerun()
+                    
+        # Delete Block
+        if st.button("🗑️ Delete Current Chat", use_container_width=True, type="secondary"):
+            if len(st.session_state.all_chats) > 1:
+                # Remove active room from memory dictionary
+                old_title = st.session_state.current_chat_title
+                st.session_state.all_chats.pop(old_title)
+                # Assign view window to the next closest room available
+                st.session_state.current_chat_title = list(st.session_state.all_chats.keys())[0]
+                st.rerun()
+            else:
+                st.warning("⚠️ You can't delete your last open chat room!")
+                
+        st.markdown("---")
+        
     if st.button("🛑 Force Stop AI", use_container_width=True):
         st.session_state.stop_generation = True
         st.toast("Stopping generation...")
 
-# Point straight to our active conversation list inside the storage array
+# Guarantee active key exists to prevent crashing
+if st.session_state.current_chat_title not in st.session_state.all_chats:
+    st.session_state.current_chat_title = list(st.session_state.all_chats.keys())[0]
 active_messages = st.session_state.all_chats[st.session_state.current_chat_title]
 
 # =====================================================================
@@ -129,11 +164,12 @@ if app_mode == "💬 Original Chatbot":
                 response_stream = None
                 for model_slug in free_models_to_try:
                     try:
-                        response_stream = client.chat.completions.create(
-                            model=model_slug,
-                            messages=[{"role": m["role"], "content": m["content"]} for m in active_messages],
-                            stream=True
-                        )
+                        client_kwargs = {
+                            "model": model_slug,
+                            "messages": [{"role": m["role"], "content": m["content"]} for m in active_messages],
+                            "stream": True
+                        }
+                        response_stream = client.chat.completions.create(**client_kwargs)
                         break
                     except Exception:
                         continue
@@ -191,14 +227,15 @@ elif app_mode == "📝 Text Humanizer":
                 response_stream = None
                 for model_slug in free_models_to_try:
                     try:
-                        response_stream = client.chat.completions.create(
-                            model=model_slug,
-                            messages=[
+                        client_kwargs = {
+                            "model": model_slug,
+                            "messages": [
                                 {"role": "system", "content": humanizer_instructions},
                                 {"role": "user", "content": f"Humanize this text:\n\n{user_paragraphs}"}
                             ],
-                            stream=True
-                        )
+                            "stream": True
+                        }
+                        response_stream = client.chat.completions.create(**client_kwargs)
                         break
                     except Exception:
                         continue
