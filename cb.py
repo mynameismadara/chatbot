@@ -3,7 +3,7 @@ from openai import OpenAI
 
 # 1. Title of your web app
 st.title("💬 My OpenRouter AI Chatbot")
-st.write("Running completely free using open-source models!")
+st.write("Running completely free with live word streaming!")
 
 # 2. Securely get the API key from Streamlit's Secrets manager
 try:
@@ -14,7 +14,7 @@ except KeyError:
 
 # 3. Initialize the client to talk to OpenRouter instead of OpenAI
 client = OpenAI(
-    base_url="https://openrouter.ai/api/v1",  # Tells the code to redirect to OpenRouter's servers
+    base_url="https://openrouter.ai/api/v1",  # Redirects to OpenRouter's free servers
     api_key=api_key_from_secrets
 )
 
@@ -40,15 +40,21 @@ if user_input := st.chat_input("Type your message here..."):
     with st.chat_message("assistant"):
         with st.spinner("Thinking..."):
             try:
-                response = client.chat.completions.create(
+                # Ask OpenRouter to stream the response chunk-by-chunk
+                response_stream = client.chat.completions.create(
                     model="openrouter/free",  # Automatically uses the best available free model
                     messages=[
                         {"role": m["role"], "content": m["content"]}
                         for m in st.session_state.messages
-                    ]
+                    ],
+                    stream=True  # Tells the AI to send words instantly as they are generated
                 )
-                assistant_reply = response.choices[0].message.content
-                st.write(assistant_reply)
+                
+                # Use Streamlit's typewriter effect to display words instantly
+                assistant_reply = st.write_stream(response_stream)
+                
+                # Save the final completed message to history
                 st.session_state.messages.append({"role": "assistant", "content": assistant_reply})
+                
             except Exception as e:
                 st.error(f"Something went wrong: {e}")
