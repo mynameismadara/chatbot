@@ -3,7 +3,7 @@ from openai import OpenAI
 
 # 1. Title of your web app
 st.title("💬 My OpenRouter AI Chatbot")
-st.write("Running completely free with high-speed Gemini streaming!")
+st.write("Running completely free with high-speed Llama streaming!")
 
 # 2. Securely get the API key from Streamlit's Secrets manager
 try:
@@ -12,7 +12,7 @@ except KeyError:
     st.error("Missing API Key! Please add OPENAI_API_KEY to your Streamlit Advanced Settings -> Secrets.")
     st.stop()
 
-# 3. Initialize the client to talk to OpenRouter instead of OpenAI
+# 3. Initialize the client to talk to OpenRouter
 client = OpenAI(
     base_url="https://openrouter.ai/api/v1",  # Redirects to OpenRouter's free servers
     api_key=api_key_from_secrets
@@ -40,9 +40,9 @@ if user_input := st.chat_input("Type your message here..."):
     with st.chat_message("assistant"):
         with st.spinner("Thinking..."):
             try:
-                # Ask OpenRouter to stream from a specific, ultra-fast free model
+                # Ask OpenRouter to stream from a reliable, permanent free model
                 response_stream = client.chat.completions.create(
-                    model="google/gemini-2.5-flash:free",  # Target the high-speed free model directly
+                    model="meta-llama/llama-3.3-70b-instruct:free",  # High-speed open source free model
                     messages=[
                         {"role": m["role"], "content": m["content"]}
                         for m in st.session_state.messages
