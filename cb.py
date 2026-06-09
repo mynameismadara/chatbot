@@ -2,7 +2,7 @@ import streamlit as st
 from openai import OpenAI
 
 # 1. Page Configuration
-st.set_page_config(page_title="Secure Chatbot", page_icon="🔒")
+st.set_page_config(page_title="Ultra-Fast Chatbot", page_icon="⚡")
 
 # 2. Check for required secrets
 try:
@@ -26,15 +26,15 @@ if not st.session_state.authenticated:
             st.rerun()
         else:
             st.error("❌ Incorrect passcode. Access Denied.")
-    st.stop()  # Stops the script here so unauthorized users see nothing below
+    st.stop()
 
 # =====================================================================
 # EVERYTHING BELOW THIS LINE ONLY RUNS IF THE PASSWORD IS CORRECT
 # =====================================================================
 
 # 4. Title of your web app
-st.title("💬 My Private AI Chatbot")
-st.write("Welcome back! The secure connection is active.")
+st.title("⚡ My Private Lightning-Fast Chatbot")
+st.write("Equipped with high-throughput, low-latency free models!")
 
 # 5. Initialize the client to talk to OpenRouter
 client = OpenAI(
@@ -45,7 +45,7 @@ client = OpenAI(
 # 6. Initialize the chat history if it doesn't exist yet
 if "messages" not in st.session_state:
     st.session_state.messages = [
-        {"role": "assistant", "content": "Hello! Authorized user detected. How can I help you today?"}
+        {"role": "assistant", "content": "Hello! The speed engine is active. Ask me anything!"}
     ]
 
 # 7. Display all previous messages on the screen
@@ -64,12 +64,12 @@ if user_input := st.chat_input("Type your message here..."):
     with st.chat_message("assistant"):
         with st.spinner("Thinking..."):
             
-            # Smart fallback list to handle rate limits
+            # REORDERED FOR SPEED: Putting the fastest low-latency models first!
             free_models_to_try = [
+                "meta-llama/llama-4-scout:free",     # Turbo-speed lightweight model
+                "openai/gpt-oss-20b:free",          # High-speed low-latency option
                 "meta-llama/llama-3.2-3b-instruct:free",
-                "mistralai/mistral-7b-instruct:free",
-                "openchat/openchat-7b:free",
-                "openrouter/free"
+                "openrouter/free"                   # Final catch-all fallback
             ]
             
             response_stream = None
