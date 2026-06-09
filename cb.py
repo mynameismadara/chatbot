@@ -4,6 +4,10 @@ from openai import OpenAI
 # 1. Page Configuration
 st.set_page_config(page_title="Anas Intelligence", page_icon="🤖")
 
+# Initialize stop flag in session state
+if "stop_generation" not in st.session_state:
+    st.session_state.stop_generation = False
+
 # 2. Check for required secrets
 try:
     api_key_from_secrets = st.secrets["OPENAI_API_KEY"]
@@ -36,6 +40,12 @@ if not st.session_state.authenticated:
 st.title("🤖 Anas Intelligence 👍")
 st.write("Welcome to your private, high-speed AI assistant.")
 
+# Create a sidebar button to reset or stop generation if needed
+with st.sidebar:
+    if st.button("🛑 Force Stop AI"):
+        st.session_state.stop_generation = True
+        st.toast("Stopping current generation...")
+
 # 5. Initialize the client to talk to OpenRouter
 client = OpenAI(
     base_url="https://openrouter.ai/api/v1",
@@ -55,6 +65,9 @@ for message in st.session_state.messages:
 
 # 8. Handle new user input
 if user_input := st.chat_input("Ask Anas Intelligence something..."):
+    # Reset the stop flag for a new prompt
+    st.session_state.stop_generation = False
+    
     # Display user message
     st.session_state.messages.append({"role": "user", "content": user_input})
     with st.chat_message("user"):
@@ -90,8 +103,25 @@ if user_input := st.chat_input("Ask Anas Intelligence something..."):
             
             if response_stream is not None:
                 try:
-                    assistant_reply = st.write_stream(response_stream)
-                    st.session_state.messages.append({"role": "assistant", "content": assistant_reply})
+                    # Create an empty placeholder to type into word-by-word
+                    message_placeholder = st.empty()
+                    full_response = ""
+                    
+                    # Manual streaming loop so we can intercept and stop it
+                    for chunk in response_stream:
+                        # Check if user clicked the sidebar stop button
+                        if st.session_state.stop_generation:
+                            full_response += "... [Generation Stopped by User]"
+                            break
+                            
+                        if chunk.choices[0].delta.content:
+                            full_response += chunk.choices[0].delta.content
+                            message_placeholder.markdown(full_response + "▌")
+                    
+                    # Clean up the trailing cursor character
+                    message_placeholder.markdown(full_response)
+                    st.session_state.messages.append({"role": "assistant", "content": full_response})
+                    
                 except Exception as e:
                     st.error(f"Error displaying response: {e}")
             else:
