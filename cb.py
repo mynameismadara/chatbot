@@ -1,6 +1,5 @@
 import streamlit as st
 from openai import OpenAI
-import streamlit.components.v1 as components
 
 # 1. Page Configuration
 st.set_page_config(page_title="Private Portal", page_icon="🔒", layout="wide")
@@ -117,122 +116,67 @@ def run_ai_stream(messages_payload, placeholder):
         return None
 
 # =====================================================================
-# VIEW 1: HORIZONTALLY SCROLLABLE RADIANT MENU
+# VIEW 1: CENTERED RADIANT MENU
 # =====================================================================
 if st.session_state.current_view == "menu":
     
-    # Custom CSS for the Horizontal Scrollable Cards with Boundaries
+    # Custom CSS for Centered Title, Footer, and Card Button Styling
     st.markdown("""
         <style>
         .menu-header {
             text-align: center;
-            font-size: 28px;
+            font-size: 32px;
             font-weight: 600;
-            margin-top: 10px;
-            margin-bottom: 25px;
+            margin-top: 40px;
+            margin-bottom: 40px;
             color: #FAFAFA;
-            letter-spacing: 1px;
+            letter-spacing: 1.5px;
         }
         .footer-text {
             position: fixed;
             left: 0;
-            bottom: 12px;
+            bottom: 15px;
             width: 100%;
             text-align: center;
             font-size: 13px;
             color: #888888;
             z-index: 100;
         }
-        .scroll-wrapper {
-            display: flex;
-            overflow-x: auto;
-            gap: 20px;
-            padding: 20px 10px 30px 10px;
-            scroll-snap-type: x mandatory;
-            scroll-behavior: smooth;
-            -webkit-overflow-scrolling: touch;
-            max-width: 100%;
-            border-radius: 12px;
-        }
-        .scroll-wrapper::-webkit-scrollbar {
-            height: 8px;
-        }
-        .scroll-wrapper::-webkit-scrollbar-track {
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 10px;
-        }
-        .scroll-wrapper::-webkit-scrollbar-thumb {
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 10px;
-        }
-        .menu-card {
-            flex: 0 0 280px;
-            scroll-snap-align: start;
-            background: #1E1E2E;
+        /* Style Streamlit Button into a Centered Card */
+        div.stButton > button {
+            width: 100%;
+            height: 220px;
+            background-color: #1E1E2E;
             border: 1px solid #313244;
-            border-radius: 16px;
-            padding: 24px;
-            text-align: center;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-            transition: transform 0.2s ease, border-color 0.2s ease;
-        }
-        .menu-card:hover {
-            transform: translateY(-4px);
-            border-color: #89B4FA;
-        }
-        .card-icon {
-            font-size: 40px;
-            margin-bottom: 12px;
-        }
-        .card-title {
-            font-size: 18px;
-            font-weight: 600;
+            border-radius: 20px;
             color: #CDD6F4;
-            margin-bottom: 8px;
+            font-size: 20px;
+            font-weight: 600;
+            white-space: pre-wrap;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+            transition: all 0.25s ease-in-out;
+            padding: 20px;
         }
-        .card-desc {
-            font-size: 13px;
-            color: #A6ADC8;
-            line-height: 1.4;
+        div.stButton > button:hover {
+            transform: translateY(-5px);
+            border-color: #89B4FA;
+            background-color: #26263A;
+            box-shadow: 0 10px 25px rgba(137, 180, 250, 0.15);
+            color: #FFFFFF;
         }
         </style>
     """, unsafe_allow_html=True)
 
-    # Top Center Header
+    # Top Middle Header
     st.markdown("<div class='menu-header'>Radiant</div>", unsafe_allow_html=True)
 
-    # Launch Button Area
-    col1, col2, col3 = st.columns([1, 2, 1])
+    # Centered Single Card Button
+    col1, col2, col3 = st.columns([1, 1.2, 1])
     with col2:
-        if st.button("🚀 Open Anas Intelligence", type="primary", use_container_width=True):
+        card_text = "🤖\n\nAnas Intelligence\n\nChatbot • Humanizer • Summarizer • Translator • Flashcards"
+        if st.button(card_text, key="btn_anas_intelligence", use_container_width=True):
             st.session_state.current_view = "anas_intelligence"
             st.rerun()
-
-    # Horizontally Scrollable Menu Display
-    st.markdown("""
-    <div class="scroll-wrapper">
-        <div class="menu-card">
-            <div class="card-icon">🤖</div>
-            <div class="card-title">Anas Intelligence</div>
-            <div class="card-desc">Access Chatbot, Humanizer, Summarizer, Universal Translator, and Flashcard Generator.</div>
-        </div>
-        <div class="menu-card">
-            <div class="card-icon">🎮</div>
-            <div class="card-title">Unblocked Games</div>
-            <div class="card-desc">Lightweight HTML5 games and text-based interactive entertainment module.</div>
-        </div>
-        <div class="menu-card">
-            <div class="card-icon">📺</div>
-            <div class="card-title">Media Viewer</div>
-            <div class="card-desc">Custom video player stream interface for educational content.</div>
-        </div>
-        <div class="menu-card">
-            <div class="card-icon">📚</div>
-            <div class="card-title">Study Hub</div>
-            <div class="card-desc">Integrated tools for course note generation and assignment planning.</div>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
 
     # Bottom Footer
     st.markdown("<div class='footer-text'>2026 made by ?</div>", unsafe_allow_html=True)
