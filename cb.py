@@ -54,17 +54,20 @@ if not st.session_state.authenticated:
 # EVERYTHING BELOW THIS LINE RUNS ONLY WHEN AUTHENTICATED
 # =====================================================================
 
-# 4. Shared API Client & Models
+# 4. Shared API Client & High-Quality Free Models
 client = OpenAI(
     base_url="https://openrouter.ai/api/v1",
     api_key=api_key_from_secrets
 )
 
+# Prioritizing large models (550B, 70B, 120B) for maximum accuracy and fewer hallucinations
 free_models_to_try = [
-    "meta-llama/llama-4-scout:free",     
-    "openai/gpt-oss-20b:free",          
-    "meta-llama/llama-3.2-3b-instruct:free",
-    "openrouter/free"                    
+    "nvidia/nemotron-3-ultra-550b-a55b:free",
+    "meta-llama/llama-3.3-70b-instruct:free",
+    "openai/gpt-oss-120b:free",
+    "google/gemma-4-31b-it:free",
+    "openai/gpt-oss-20b:free",
+    "openrouter/free"
 ]
 
 global_languages_list = [
@@ -188,7 +191,7 @@ elif st.session_state.current_view == "anas_intelligence":
 
     # 5. Sidebar Navigation
     with st.sidebar:
-        # Exit to Menu Button added directly above the critical warning
+        # Exit to Menu Button
         if st.button("🔙 Exit to Menu", use_container_width=True):
             st.session_state.current_view = "menu"
             st.rerun()
@@ -264,7 +267,7 @@ elif st.session_state.current_view == "anas_intelligence":
         st.session_state.current_chat_title = list(st.session_state.all_chats.keys())[0]
     active_messages = st.session_state.all_chats[st.session_state.current_chat_title]
 
-    # MODE 1: ORIGINAL CHATBOT (WITH GEMINI-STYLE SYSTEM PROMPT)
+    # MODE 1: ORIGINAL CHATBOT (WITH GEMINI FORMATTING + UPGRADED MODELS)
     if app_mode == "💬 Original Chatbot":
         st.title("🤖 Anas Intelligence 👍")
         st.caption(f"Currently Viewing Room: **{st.session_state.current_chat_title}**")
@@ -285,14 +288,14 @@ elif st.session_state.current_view == "anas_intelligence":
                     gemini_system_prompt = {
                         "role": "system",
                         "content": (
-                            "You are Anas Intelligence, a precise, helpful AI assistant.\n\n"
+                            "You are Anas Intelligence, a precise, factual, helpful AI assistant.\n\n"
                             "RESPONSE FORMATTING RULES:\n"
-                            "- **Get Straight to the Point:** Do not start responses with generic fluff like 'Sure!', 'Here is a breakdown...', or 'I'd be happy to help'.\n"
+                            "- **Get Straight to the Point:** Do not start responses with generic intro fluff.\n"
                             "- **High Visual Hierarchy:** Use clear Markdown headers (`###`) to separate distinct sections.\n"
                             "- **Bold for Emphasis:** Use bold text (`**key concepts**`) generously to make responses easy to scan.\n"
                             "- **Prefer Lists over Text Walls:** Use bulleted or numbered lists instead of dense paragraphs.\n"
-                            "- **Use Tables for Comparisons:** Whenever comparing items or listing specs, present the data in Markdown tables.\n"
-                            "- **Clean Code & Formulas:** Format math using LaTeX (`$E=mc^2$`) and wrap code in clean markdown code blocks."
+                            "- **Use Tables for Comparisons:** Whenever comparing items, specs, or products, present the data in clean Markdown tables.\n"
+                            "- **Factual Accuracy:** Only provide real, verified facts, specs, and real hardware/product names."
                         )
                     }
                     
