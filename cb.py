@@ -216,7 +216,7 @@ elif st.session_state.current_view == "anas_intelligence":
                     new_title = f"Chat {new_chat_num}"
                     
                 st.session_state.all_chats[new_title] = [
-                    {"role": "assistant", "content": "Hello! Started a brand new chat. What's on your mind?"}
+                    {"role": "assistant", "content": "Secure connection established. System ready."}
                 ]
                 st.session_state.current_chat_title = new_title
                 st.rerun()
@@ -264,7 +264,7 @@ elif st.session_state.current_view == "anas_intelligence":
         st.session_state.current_chat_title = list(st.session_state.all_chats.keys())[0]
     active_messages = st.session_state.all_chats[st.session_state.current_chat_title]
 
-    # MODE 1: ORIGINAL CHATBOT
+    # MODE 1: ORIGINAL CHATBOT (WITH GEMINI-STYLE SYSTEM PROMPT)
     if app_mode == "💬 Original Chatbot":
         st.title("🤖 Anas Intelligence 👍")
         st.caption(f"Currently Viewing Room: **{st.session_state.current_chat_title}**")
@@ -281,7 +281,22 @@ elif st.session_state.current_view == "anas_intelligence":
 
             with st.chat_message("assistant"):
                 with st.spinner("Thinking..."):
-                    payload = [{"role": m["role"], "content": m["content"]} for m in active_messages]
+                    # Gemini Formatting System Instructions
+                    gemini_system_prompt = {
+                        "role": "system",
+                        "content": (
+                            "You are Anas Intelligence, a precise, helpful AI assistant.\n\n"
+                            "RESPONSE FORMATTING RULES:\n"
+                            "- **Get Straight to the Point:** Do not start responses with generic fluff like 'Sure!', 'Here is a breakdown...', or 'I'd be happy to help'.\n"
+                            "- **High Visual Hierarchy:** Use clear Markdown headers (`###`) to separate distinct sections.\n"
+                            "- **Bold for Emphasis:** Use bold text (`**key concepts**`) generously to make responses easy to scan.\n"
+                            "- **Prefer Lists over Text Walls:** Use bulleted or numbered lists instead of dense paragraphs.\n"
+                            "- **Use Tables for Comparisons:** Whenever comparing items or listing specs, present the data in Markdown tables.\n"
+                            "- **Clean Code & Formulas:** Format math using LaTeX (`$E=mc^2$`) and wrap code in clean markdown code blocks."
+                        )
+                    }
+                    
+                    payload = [gemini_system_prompt] + [{"role": m["role"], "content": m["content"]} for m in active_messages]
                     reply = run_ai_stream(payload, st.empty())
                     if reply:
                         active_messages.append({"role": "assistant", "content": reply})
