@@ -136,7 +136,7 @@ st.markdown("""
     <style>
     /* Main Layout Spacing */
     .block-container {
-        padding-top: 2rem;
+        padding-top: 1rem;
         padding-bottom: 3rem;
         max-width: 1200px;
     }
@@ -183,12 +183,13 @@ if st.session_state.current_view == "menu":
         <style>
         .menu-header {
             text-align: center;
-            font-size: 36px;
-            font-weight: 700;
-            margin-top: 40px;
-            margin-bottom: 40px;
+            font-size: 48px;
+            font-weight: 800;
+            margin-top: 10px;
+            margin-bottom: 35px;
             color: #FAFAFA;
-            letter-spacing: 1.5px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
         }
         .footer-text {
             position: fixed;
@@ -200,36 +201,40 @@ if st.session_state.current_view == "menu":
             color: #888888;
             z-index: 100;
         }
-        /* Style Streamlit Button into a Centered Card */
+        /* Style Streamlit Button into a Centered Card with Large Emojis & Text */
         div.stButton > button {
             width: 100%;
-            height: 220px;
+            height: 260px;
             background-color: #1E1E2E;
             border: 1px solid #313244;
-            border-radius: 20px;
+            border-radius: 24px;
             color: #CDD6F4;
-            font-size: 20px;
-            font-weight: 600;
+            font-size: 26px;
+            font-weight: 700;
             white-space: pre-wrap;
-            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+            box-shadow: 0 8px 28px rgba(0,0,0,0.4);
             transition: all 0.25s ease-in-out;
-            padding: 20px;
+            padding: 24px;
+            line-height: 1.4;
         }
         div.stButton > button:hover {
-            transform: translateY(-5px);
+            transform: translateY(-6px);
             border-color: #89B4FA;
             background-color: #26263A;
-            box-shadow: 0 10px 25px rgba(137, 180, 250, 0.15);
+            box-shadow: 0 12px 30px rgba(137, 180, 250, 0.2);
             color: #FFFFFF;
         }
         </style>
     """, unsafe_allow_html=True)
 
+    # 1. Bigger & Higher Radiant Text
     st.markdown("<div class='menu-header'>Radiant</div>", unsafe_allow_html=True)
 
-    col1, col2, col3 = st.columns([1, 1.2, 1])
+    # 2. Perfect Center Alignment
+    col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
-        card_text = "🤖\n\nAnas Intelligence\n\nChatbot • Humanizer • Summarizer • Translator • Flashcards"
+        # 3. Bigger Text and Emojis
+        card_text = "🤖\n\nAnas Intelligence\n\n💬 Chatbot • 📝 Humanizer\n📊 Summarizer • 🌐 Translator\n🧠 Flashcards"
         if st.button(card_text, key="btn_anas_intelligence", use_container_width=True):
             st.session_state.current_view = "anas_intelligence"
             st.rerun()
