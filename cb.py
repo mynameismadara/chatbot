@@ -54,13 +54,26 @@ if not st.session_state.authenticated:
 # EVERYTHING BELOW THIS LINE RUNS ONLY WHEN AUTHENTICATED
 # =====================================================================
 
+# Global System Instructions for Gemini-style clean formatting
+GEMINI_FORMATTING_PROMPT = """
+You are Anas Intelligence, an ultra-precise, highly factual, and articulate AI assistant.
+
+CRITICAL FORMATTING RULES FOR ALL RESPONSES:
+- **Zero Fluff:** Never start with generic filler sentences like "Sure, here is...", "As an AI...", or "Here is a breakdown...". Jump straight into the core content.
+- **High Visual Hierarchy:** Divide long answers using clear Markdown subheaders (`### Section Title`).
+- **Scannable Bolding:** Bold key terms, important numbers, and critical phrases (`**bold text**`) so the response can be skimmed in seconds.
+- **Lists over Text Walls:** Use bullet points or numbered lists instead of dense paragraphs. Keep bullet points concise and punchy.
+- **Tables for Comparisons:** Whenever comparing specs, features, dates, or items, always output standard Markdown tables.
+- **Clean Code & Formulas:** Wrap code in Markdown blocks and format math using clean LaTeX syntax.
+- **Strict Factual Accuracy:** Never invent hardware names, stats, or fake data.
+"""
+
 # 4. Shared API Client & High-Quality Free Models
 client = OpenAI(
     base_url="https://openrouter.ai/api/v1",
     api_key=api_key_from_secrets
 )
 
-# Prioritizing large models (550B, 70B, 120B) for maximum accuracy and fewer hallucinations
 free_models_to_try = [
     "nvidia/nemotron-3-ultra-550b-a55b:free",
     "meta-llama/llama-3.3-70b-instruct:free",
@@ -118,18 +131,60 @@ def run_ai_stream(messages_payload, placeholder):
         st.error("All free models are currently heavily loaded. Try again shortly!")
         return None
 
+# Inject Global Custom CSS for Clean UI Elements
+st.markdown("""
+    <style>
+    /* Main Layout Spacing */
+    .block-container {
+        padding-top: 2rem;
+        padding-bottom: 3rem;
+        max-width: 1200px;
+    }
+    
+    /* Input Boxes & TextAreas Styling */
+    .stTextArea textarea, .stTextInput input {
+        border-radius: 12px !important;
+        border: 1px solid #313244 !important;
+        background-color: #181825 !important;
+        color: #CDD6F4 !important;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+    }
+    .stTextArea textarea:focus, .stTextInput input:focus {
+        border-color: #89B4FA !important;
+        box-shadow: 0 0 8px rgba(137, 180, 250, 0.2) !important;
+    }
+
+    /* Clean Card Container Styling */
+    [data-testid="stForm"], div[data-testid="stExpander"], div.stContainer {
+        border-radius: 14px;
+    }
+
+    /* Chat Messages Styling */
+    .stChatMessage {
+        border-radius: 14px !important;
+        padding: 1rem !important;
+        margin-bottom: 0.8rem !important;
+    }
+    
+    /* Header Polish */
+    h1, h2, h3 {
+        letter-spacing: -0.5px;
+        font-weight: 600;
+    }
+    </style>
+""", unsafe_allow_html=True)
+
 # =====================================================================
 # VIEW 1: CENTERED RADIANT MENU
 # =====================================================================
 if st.session_state.current_view == "menu":
     
-    # Custom CSS for Centered Title, Footer, and Card Button Styling
     st.markdown("""
         <style>
         .menu-header {
             text-align: center;
-            font-size: 32px;
-            font-weight: 600;
+            font-size: 36px;
+            font-weight: 700;
             margin-top: 40px;
             margin-bottom: 40px;
             color: #FAFAFA;
@@ -170,10 +225,8 @@ if st.session_state.current_view == "menu":
         </style>
     """, unsafe_allow_html=True)
 
-    # Top Middle Header
     st.markdown("<div class='menu-header'>Radiant</div>", unsafe_allow_html=True)
 
-    # Centered Single Card Button
     col1, col2, col3 = st.columns([1, 1.2, 1])
     with col2:
         card_text = "🤖\n\nAnas Intelligence\n\nChatbot • Humanizer • Summarizer • Translator • Flashcards"
@@ -181,7 +234,6 @@ if st.session_state.current_view == "menu":
             st.session_state.current_view = "anas_intelligence"
             st.rerun()
 
-    # Bottom Footer
     st.markdown("<div class='footer-text'>2026 made by ?</div>", unsafe_allow_html=True)
 
 # =====================================================================
@@ -191,7 +243,6 @@ elif st.session_state.current_view == "anas_intelligence":
 
     # 5. Sidebar Navigation
     with st.sidebar:
-        # Exit to Menu Button
         if st.button("🔙 Exit to Menu", use_container_width=True):
             st.session_state.current_view = "menu"
             st.rerun()
@@ -219,7 +270,7 @@ elif st.session_state.current_view == "anas_intelligence":
                     new_title = f"Chat {new_chat_num}"
                     
                 st.session_state.all_chats[new_title] = [
-                    {"role": "assistant", "content": "Secure connection established. System ready."}
+                    {"role": "assistant", "content": "Secure connection established. How can I help you today?"}
                 ]
                 st.session_state.current_chat_title = new_title
                 st.rerun()
@@ -267,10 +318,10 @@ elif st.session_state.current_view == "anas_intelligence":
         st.session_state.current_chat_title = list(st.session_state.all_chats.keys())[0]
     active_messages = st.session_state.all_chats[st.session_state.current_chat_title]
 
-    # MODE 1: ORIGINAL CHATBOT (WITH GEMINI FORMATTING + UPGRADED MODELS)
+    # MODE 1: ORIGINAL CHATBOT
     if app_mode == "💬 Original Chatbot":
-        st.title("🤖 Anas Intelligence 👍")
-        st.caption(f"Currently Viewing Room: **{st.session_state.current_chat_title}**")
+        st.title("🤖 Anas Intelligence")
+        st.caption(f"Active Session: **{st.session_state.current_chat_title}**")
 
         for message in active_messages:
             with st.chat_message(message["role"]):
@@ -284,174 +335,156 @@ elif st.session_state.current_view == "anas_intelligence":
 
             with st.chat_message("assistant"):
                 with st.spinner("Thinking..."):
-                    # Gemini Formatting System Instructions
-                    gemini_system_prompt = {
-                        "role": "system",
-                        "content": (
-                            "You are Anas Intelligence, a precise, factual, helpful AI assistant.\n\n"
-                            "RESPONSE FORMATTING RULES:\n"
-                            "- **Get Straight to the Point:** Do not start responses with generic intro fluff.\n"
-                            "- **High Visual Hierarchy:** Use clear Markdown headers (`###`) to separate distinct sections.\n"
-                            "- **Bold for Emphasis:** Use bold text (`**key concepts**`) generously to make responses easy to scan.\n"
-                            "- **Prefer Lists over Text Walls:** Use bulleted or numbered lists instead of dense paragraphs.\n"
-                            "- **Use Tables for Comparisons:** Whenever comparing items, specs, or products, present the data in clean Markdown tables.\n"
-                            "- **Factual Accuracy:** Only provide real, verified facts, specs, and real hardware/product names."
-                        )
-                    }
-                    
-                    payload = [gemini_system_prompt] + [{"role": m["role"], "content": m["content"]} for m in active_messages]
+                    payload = [{"role": "system", "content": GEMINI_FORMATTING_PROMPT}] + [
+                        {"role": m["role"], "content": m["content"]} for m in active_messages
+                    ]
                     reply = run_ai_stream(payload, st.empty())
                     if reply:
                         active_messages.append({"role": "assistant", "content": reply})
 
     # MODE 2: TEXT HUMANIZER
     elif app_mode == "📝 Text Humanizer":
-        st.title("📝 Anas Intelligence - Humanizer Mode")
-        st.write("Paste paragraphs below to rewrite them with a fluid, natural human flow.")
+        st.title("📝 Text Humanizer")
+        st.caption("Rewrite text into fluid, natural human prose with zero robotic phrasing.")
 
         col1, col2 = st.columns(2, gap="large")
         with col1:
-            user_paragraphs = st.text_area("Paste text or essay here:", height=300, placeholder="Paste text here...", key="humanizer_area")
-            humanizer_style = st.selectbox("Choose Style Mode:", ["Formal", "Chill", "Student"])
+            user_paragraphs = st.text_area("Source Text:", height=300, placeholder="Paste your essay or text here...", key="humanizer_area")
+            humanizer_style = st.selectbox("Style Profile:", ["Formal", "Chill", "Student"])
             submit_button = st.button("✨ Humanize Text", type="primary", use_container_width=True)
 
         with col2:
-            output_placeholder = st.empty()
-            output_placeholder.info("Your humanized text will stream here...")
+            st.markdown("### 📄 Humanized Output")
+            with st.container(border=True):
+                output_placeholder = st.empty()
+                output_placeholder.info("Your humanized text will stream here...")
 
         if submit_button and user_paragraphs.strip():
             st.session_state.stop_generation = False
-            with col2, st.spinner("Rewriting..."):
-                if humanizer_style == "Formal":
-                    style_instruction = (
-                        "Rewrite the text to make it sound highly professional, sophisticated, and fluid. "
-                        "Use precise and academic vocabulary, eliminate awkward phrasing or robotic patterns, "
-                        "and maintain a structured, authoritative, yet completely natural tone."
-                    )
-                elif humanizer_style == "Chill":
-                    style_instruction = (
-                        "Rewrite the text to sound completely casual, conversational, and relaxed. "
-                        "Use simple vocabulary, blend varied sentence structures naturally, and phrase items "
-                        "exactly like a real human would explain something to a close friend in a relaxed chat, "
-                        "without using stiff or artificial textbook speech."
-                    )
-                else: # Student
-                    style_instruction = (
-                        "Rewrite the text from the perspective of an intelligent high school or university student. "
-                        "Keep it clear, straightforward, and readable. Avoid overly complex, archaic words that sound like AI, "
-                        "but don't make it unprofessional either. Make it sound like an authentic student assignment or response."
-                    )
-                    
-                instr = f"You are an expert human editor. {style_instruction} Make sure to preserve all key factual data accurately."
-                payload = [{"role": "system", "content": instr}, {"role": "user", "content": user_paragraphs}]
-                run_ai_stream(payload, output_placeholder)
+            with col2:
+                with st.spinner("Rewriting..."):
+                    if humanizer_style == "Formal":
+                        style_instruction = "Rewrite to sound highly professional, academic, and fluid. Eliminate repetitive sentence structures."
+                    elif humanizer_style == "Chill":
+                        style_instruction = "Rewrite to sound completely casual, relaxed, and conversational, like explaining to a close friend."
+                    else:
+                        style_instruction = "Rewrite from the perspective of an intelligent high school or college student. Straightforward and authentic."
+                        
+                    instr = f"{GEMINI_FORMATTING_PROMPT}\n\nYou are an expert human editor. {style_instruction} Preserve all key facts and details."
+                    payload = [{"role": "system", "content": instr}, {"role": "user", "content": user_paragraphs}]
+                    run_ai_stream(payload, output_placeholder)
 
     # MODE 3: SMART SUMMARIZER
     elif app_mode == "📊 Smart Summarizer":
-        st.title("📊 Anas Intelligence - Smart Summarizer")
-        st.write("Turn huge documents or notes into scannable key points.")
+        st.title("📊 Smart Summarizer")
+        st.caption("Extract structured takeaways and core insights from long documents.")
 
         col1, col2 = st.columns(2, gap="large")
         with col1:
-            heavy_text = st.text_area("Paste material here:", height=350, placeholder="Paste details here...", key="summary_area")
+            heavy_text = st.text_area("Source Material:", height=350, placeholder="Paste long documents or study notes here...", key="summary_area")
             summarize_button = st.button("⚡ Extract Insights", type="primary", use_container_width=True)
 
         with col2:
-            summary_placeholder = st.empty()
-            summary_placeholder.info("The summary breakdown will generate here...")
+            st.markdown("### 📋 Executive Summary")
+            with st.container(border=True):
+                summary_placeholder = st.empty()
+                summary_placeholder.info("The summary breakdown will generate here...")
 
         if summarize_button and heavy_text.strip():
             st.session_state.stop_generation = False
-            with col2, st.spinner("Analyzing data..."):
-                instr = "You are an elite analyst. Process the text and return a summary formatted exactly with sections: ## 📋 Executive Summary, ## 🔑 Key Takeaways, and ## 🧠 Core Terms & Concepts."
-                payload = [{"role": "system", "content": instr}, {"role": "user", "content": heavy_text}]
-                run_ai_stream(payload, summary_placeholder)
+            with col2:
+                with st.spinner("Analyzing data..."):
+                    instr = f"{GEMINI_FORMATTING_PROMPT}\n\nProcess the text into three formatted sections:\n### 📋 Executive Summary\n### 🔑 Key Takeaways (bullet points with bold keywords)\n### 🧠 Core Terms & Definitions"
+                    payload = [{"role": "system", "content": instr}, {"role": "user", "content": heavy_text}]
+                    run_ai_stream(payload, summary_placeholder)
 
     # MODE 4: AI TRANSLATOR
     elif app_mode == "🌐 AI Translator":
-        st.title("🌐 Anas Intelligence - Universal AI Translator")
-        st.write("Translate source text into any global language using specific style profiles.")
+        st.title("🌐 AI Universal Translator")
+        st.caption("Translate source text seamlessly across global languages.")
 
         col1, col2 = st.columns(2, gap="large")
         with col1:
-            src_text = st.text_area("Text to Translate:", height=250, placeholder="Type or paste text here...", key="trans_area")
+            src_text = st.text_area("Source Text:", height=250, placeholder="Type or paste text to translate...", key="trans_area")
             
             lang_col, style_col = st.columns(2)
             with lang_col:
                 target_lang = st.selectbox("Target Language:", global_languages_list, index=0)
             with style_col:
-                translation_style = st.selectbox("Tone/Style Profile:", ["Literal/Exact", "Natural/Casual", "Formal/Business"])
+                translation_style = st.selectbox("Tone Profile:", ["Literal/Exact", "Natural/Casual", "Formal/Business"])
                 
             translate_button = st.button("🚀 Translate Text", type="primary", use_container_width=True)
 
         with col2:
-            trans_placeholder = st.empty()
-            trans_placeholder.info("Your AI translation will stream here...")
+            st.markdown(f"### 🌐 Translation ({target_lang})")
+            with st.container(border=True):
+                trans_placeholder = st.empty()
+                trans_placeholder.info("Your AI translation will stream here...")
 
         if translate_button and src_text.strip():
             st.session_state.stop_generation = False
-            with col2, st.spinner("Translating text..."):
-                instr = f"You are a professional multilingual translator. Translate the user's text into {target_lang}. Adjust your vocabulary selection and grammatical phrasing to match a '{translation_style}' stylistic profile."
-                payload = [{"role": "system", "content": instr}, {"role": "user", "content": src_text}]
-                run_ai_stream(payload, trans_placeholder)
+            with col2:
+                with st.spinner("Translating text..."):
+                    instr = f"{GEMINI_FORMATTING_PROMPT}\n\nTranslate the input text into {target_lang} using a '{translation_style}' stylistic profile."
+                    payload = [{"role": "system", "content": instr}, {"role": "user", "content": src_text}]
+                    run_ai_stream(payload, trans_placeholder)
 
     # MODE 5: FLASHCARD GENERATOR
     elif app_mode == "🧠 Flashcard Generator":
-        st.title("🧠 Anas Intelligence - Smart Flashcard Engine")
-        st.write("Input your raw material in English, select your targets, and forge custom multi-language flashcards.")
+        st.title("🧠 Flashcard Engine")
+        st.caption("Generate structured, multi-lingual study decks instantly from your notes.")
 
         col1, col2 = st.columns(2, gap="large")
         with col1:
-            raw_notes = st.text_area("Paste Study Material/Prompts (in English):", height=240, placeholder="Type topic ideas or paste English notes here...", key="flash_area")
+            raw_notes = st.text_area("Study Material (English):", height=240, placeholder="Paste topics or notes here...", key="flash_area")
             
             f_lang_col, f_num_col = st.columns(2)
             with f_lang_col:
-                study_lang = st.selectbox("Flashcard Language:", global_languages_list, index=0, key="flash_lang_select")
+                study_lang = st.selectbox("Deck Language:", global_languages_list, index=0, key="flash_lang_select")
             with f_num_col:
-                num_cards = st.slider("Number of flashcards to forge:", min_value=1, max_value=100, value=5)
+                num_cards = st.slider("Number of cards:", min_value=1, max_value=50, value=5)
                 
             generate_cards_btn = st.button("🃏 Forge Study Flashcards", type="primary", use_container_width=True)
             
         with col2:
-            st.markdown("### 🗂️ Study Deck Display")
+            st.markdown("### 🗂️ Study Deck")
             
             t_col1, t_col2 = st.columns(2)
             with t_col1:
-                if st.button("👁️ Show All Answers", use_container_width=True):
+                if st.button("👁️ Show Answers", use_container_width=True):
                     st.session_state.show_answers = True
             with t_col2:
-                if st.button("🙈 Hide All Answers", use_container_width=True):
+                if st.button("🙈 Hide Answers", use_container_width=True):
                     st.session_state.show_answers = False
 
             st.markdown("---")
-            cards_display_placeholder = st.empty()
-            
-            if st.session_state.flashcard_content:
-                if st.session_state.show_answers:
-                    cards_display_placeholder.markdown(st.session_state.flashcard_content)
+            with st.container(border=True):
+                cards_display_placeholder = st.empty()
+                
+                if st.session_state.flashcard_content:
+                    if st.session_state.show_answers:
+                        cards_display_placeholder.markdown(st.session_state.flashcard_content)
+                    else:
+                        masked_content = st.session_state.flashcard_content.replace("ANSWER:", "||**ANSWER:**").replace("\n\n#", "||\n\n#")
+                        if "||" in masked_content and not masked_content.endswith("||"):
+                            masked_content += "||"
+                        cards_display_placeholder.markdown(masked_content)
                 else:
-                    masked_content = st.session_state.flashcard_content.replace("ANSWER:", "||**ANSWER:**").replace("\n\n#", "||\n\n#")
-                    if "||" in masked_content and not masked_content.endswith("||"):
-                        masked_content += "||"
-                    cards_display_placeholder.markdown(masked_content)
-            else:
-                cards_display_placeholder.info("Your translated study deck will build here. Click individual answers to reveal them or use the toggles!")
+                    cards_display_placeholder.info("Your flashcard deck will build here...")
 
         if generate_cards_btn and raw_notes.strip():
             st.session_state.stop_generation = False
             st.session_state.show_answers = False
             with col2:
-                with st.spinner(f"Processing English material and translation to {study_lang}..."):
+                with st.spinner(f"Forging {num_cards} cards in {study_lang}..."):
                     instr = (
-                        f"You are an elite academic flashcard generator and language expert. Read the user's English material "
-                        f"and generate exactly {num_cards} distinct flashcards to help study. "
-                        f"CRITICAL: The entire content of the flashcards (both questions and answers) MUST be written completely in {study_lang}. "
-                        f"Translate the underlying English context seamlessly.\n\n"
-                        f"Follow this strict layout formatting for every single card:\n\n"
-                        f"### 🃏 FLASHCARD X\n"
-                        f"**QUESTION:** (Write question here in {study_lang})\n"
-                        f"**ANSWER:** (Write answer here in {study_lang})\n\n"
-                        f"Do not include any greeting or conversational fluff, return only the formatted cards."
+                        f"{GEMINI_FORMATTING_PROMPT}\n\n"
+                        f"Read the user's material and create exactly {num_cards} flashcards in {study_lang}.\n"
+                        f"Use this clean structure for every single card:\n\n"
+                        f"### 🃏 CARD X\n"
+                        f"**QUESTION:** (Question in {study_lang})\n"
+                        f"**ANSWER:** (Answer in {study_lang})\n\n"
+                        f"Output ONLY the cards without intro or outro chatter."
                     )
                     payload = [{"role": "system", "content": instr}, {"role": "user", "content": raw_notes}]
                     
