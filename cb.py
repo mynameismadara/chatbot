@@ -134,13 +134,6 @@ def run_ai_stream(messages_payload, placeholder):
 # Inject Global Custom CSS for Clean UI Elements
 st.markdown("""
     <style>
-    /* Main Layout Spacing */
-    .block-container {
-        padding-top: 1rem;
-        padding-bottom: 3rem;
-        max-width: 1200px;
-    }
-    
     /* Input Boxes & TextAreas Styling */
     .stTextArea textarea, .stTextInput input {
         border-radius: 12px !important;
@@ -175,30 +168,75 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # =====================================================================
-# VIEW 1: PERFECTLY CENTERED RADIANT MENU
+# VIEW 1: ABSOLUTE CENTERED RADIANT MENU (X & Y AXIS LOCKED)
 # =====================================================================
 if st.session_state.current_view == "menu":
     
     st.markdown("""
         <style>
-        /* Center Wrapper for Vertical & Horizontal Precision */
-        .menu-wrapper {
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            min-height: 70vh;
-            text-align: center;
+        /* Target Main Page Container to Center Everything Vertically & Horizontally */
+        .main .block-container {
+            display: flex !important;
+            flex-direction: column !important;
+            justify-content: center !important;
+            align-items: center !important;
+            min-height: 85vh !important;
+            padding-top: 0rem !important;
+            padding-bottom: 0rem !important;
+            max-width: 1000px !important;
         }
+
         .menu-header {
             text-align: center;
             font-size: 52px;
             font-weight: 800;
-            margin-bottom: 25px;
+            margin-bottom: 30px;
             color: #FAFAFA;
             letter-spacing: 3px;
             text-transform: uppercase;
+            width: 100%;
         }
+
+        /* Column Flex Center Lock */
+        div[data-testid="stColumn"] {
+            display: flex !important;
+            justify-content: center !important;
+            align-items: center !important;
+        }
+
+        div.stButton {
+            width: 100% !important;
+            display: flex !important;
+            justify-content: center !important;
+        }
+
+        /* Style Menu Card Button */
+        div.stButton > button {
+            width: 100% !important;
+            max-width: 480px !important;
+            height: 270px !important;
+            background-color: #1E1E2E !important;
+            border: 1px solid #313244 !important;
+            border-radius: 24px !important;
+            color: #CDD6F4 !important;
+            font-size: 26px !important;
+            font-weight: 700 !important;
+            white-space: pre-wrap !important;
+            box-shadow: 0 8px 28px rgba(0,0,0,0.4) !important;
+            transition: all 0.25s ease-in-out !important;
+            padding: 24px !important;
+            line-height: 1.4 !important;
+            margin: 0 auto !important;
+        }
+
+        div.stButton > button:hover {
+            transform: translateY(-6px) !important;
+            border-color: #89B4FA !important;
+            background-color: #26263A !important;
+            box-shadow: 0 12px 30px rgba(137, 180, 250, 0.2) !important;
+            color: #FFFFFF !important;
+        }
+
         .footer-text {
             position: fixed;
             left: 0;
@@ -209,39 +247,14 @@ if st.session_state.current_view == "menu":
             color: #888888;
             z-index: 100;
         }
-        /* Style Button Card */
-        div.stButton > button {
-            width: 100%;
-            max-width: 500px;
-            height: 270px;
-            margin: 0 auto;
-            background-color: #1E1E2E;
-            border: 1px solid #313244;
-            border-radius: 24px;
-            color: #CDD6F4;
-            font-size: 26px;
-            font-weight: 700;
-            white-space: pre-wrap;
-            box-shadow: 0 8px 28px rgba(0,0,0,0.4);
-            transition: all 0.25s ease-in-out;
-            padding: 24px;
-            line-height: 1.4;
-        }
-        div.stButton > button:hover {
-            transform: translateY(-6px);
-            border-color: #89B4FA;
-            background-color: #26263A;
-            box-shadow: 0 12px 30px rgba(137, 180, 250, 0.2);
-            color: #FFFFFF;
-        }
         </style>
     """, unsafe_allow_html=True)
 
-    # Centered Vertical Container
+    # 1. Header Title
     st.markdown("<div class='menu-header'>Radiant</div>", unsafe_allow_html=True)
 
-    # 3-Column Center Alignment Ratio
-    col1, col2, col3 = st.columns([1, 2.2, 1])
+    # 2. Symmetric Center Column Layout
+    col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
         card_text = "🤖\n\nAnas Intelligence\n\n💬 Chatbot • 📝 Humanizer\n📊 Summarizer • 🌐 Translator\n🧠 Flashcards"
         if st.button(card_text, key="btn_anas_intelligence", use_container_width=True):
@@ -254,6 +267,9 @@ if st.session_state.current_view == "menu":
 # VIEW 2: FULL ANAS INTELLIGENCE SUITE
 # =====================================================================
 elif st.session_state.current_view == "anas_intelligence":
+
+    # Padding reset for standard views
+    st.markdown("<style>.main .block-container { padding-top: 2rem !important; max-width: 1200px !important; }</style>", unsafe_allow_html=True)
 
     # 5. Sidebar Navigation
     with st.sidebar:
