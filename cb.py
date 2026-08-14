@@ -175,20 +175,28 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # =====================================================================
-# VIEW 1: CENTERED RADIANT MENU
+# VIEW 1: PERFECTLY CENTERED RADIANT MENU
 # =====================================================================
 if st.session_state.current_view == "menu":
     
     st.markdown("""
         <style>
+        /* Center Wrapper for Vertical & Horizontal Precision */
+        .menu-wrapper {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 70vh;
+            text-align: center;
+        }
         .menu-header {
             text-align: center;
-            font-size: 48px;
+            font-size: 52px;
             font-weight: 800;
-            margin-top: 10px;
-            margin-bottom: 35px;
+            margin-bottom: 25px;
             color: #FAFAFA;
-            letter-spacing: 2px;
+            letter-spacing: 3px;
             text-transform: uppercase;
         }
         .footer-text {
@@ -201,10 +209,12 @@ if st.session_state.current_view == "menu":
             color: #888888;
             z-index: 100;
         }
-        /* Style Streamlit Button into a Centered Card with Large Emojis & Text */
+        /* Style Button Card */
         div.stButton > button {
             width: 100%;
-            height: 260px;
+            max-width: 500px;
+            height: 270px;
+            margin: 0 auto;
             background-color: #1E1E2E;
             border: 1px solid #313244;
             border-radius: 24px;
@@ -227,13 +237,12 @@ if st.session_state.current_view == "menu":
         </style>
     """, unsafe_allow_html=True)
 
-    # 1. Bigger & Higher Radiant Text
+    # Centered Vertical Container
     st.markdown("<div class='menu-header'>Radiant</div>", unsafe_allow_html=True)
 
-    # 2. Perfect Center Alignment
-    col1, col2, col3 = st.columns([1, 2, 1])
+    # 3-Column Center Alignment Ratio
+    col1, col2, col3 = st.columns([1, 2.2, 1])
     with col2:
-        # 3. Bigger Text and Emojis
         card_text = "🤖\n\nAnas Intelligence\n\n💬 Chatbot • 📝 Humanizer\n📊 Summarizer • 🌐 Translator\n🧠 Flashcards"
         if st.button(card_text, key="btn_anas_intelligence", use_container_width=True):
             st.session_state.current_view = "anas_intelligence"
