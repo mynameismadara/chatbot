@@ -2,7 +2,7 @@ import streamlit as st
 from openai import OpenAI
 import requests
 from bs4 import BeautifulSoup
-from urllib.parse import urljoin
+from urllib.parse import urljoin, parse_qs, urlparse
 from duckduckgo_search import DDGS
 
 # 1. Page Configuration
@@ -174,6 +174,44 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
+# Helper function to clean and render proxied HTML content
+def fetch_and_clean_html(target_url):
+    try:
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36"
+        }
+        response = requests.get(target_url, headers=headers, timeout=12)
+        
+        if response.status_code == 200:
+            soup = BeautifulSoup(response.text, "html.parser")
+            
+            # 1. Convert relative image URLs to absolute
+            for img in soup.find_all("img", src=True):
+                img["src"] = urljoin(target_url, img["src"])
+                
+            # 2. Fix DuckDuckGo redirects and convert relative links to absolute
+            for a in soup.find_all("a", href=True):
+                href = a["href"]
+                # Resolve DuckDuckGo redirect parameters to direct target URLs
+                if "duckduckgo.com/l/?" in href or href.startswith("/l/?"):
+                    parsed = urlparse(href)
+                    query = parse_qs(parsed.query)
+                    if "uddg" in query:
+                        href = query["uddg"][0]
+                a["href"] = urljoin(target_url, href)
+
+            # 3. Strip script tags to avoid context/origin crashes
+            for script in soup(["script"]):
+                script.decompose()
+
+            return str(soup)
+        else:
+            st.error(f"Target node rejected request. Status Code: {response.status_code}")
+            return None
+    except Exception as e:
+        st.error(f"Proxy Connection Error: {e}")
+        return None
+
 # =====================================================================
 # VIEW 1: ABSOLUTE CENTERED RADIANT MENU (SIDE-BY-SIDE BUTTONS)
 # =====================================================================
@@ -275,7 +313,7 @@ if st.session_state.current_view == "menu":
             st.rerun()
 
     with col2:
-        card_text_2 = "🔍\n\nSearch Engine\n\n🔎 DuckDuckGo • ⚡ Tavily AI\n🌐 Web Proxy • 📖 Reader"
+        card_text_2 = "🔍\n\nSearch Engine\n\n🔎 DDG Native • 🌐 DDG Proxy\n⚡ Tavily AI • 🌐 Direct Proxy\n📖 Reader"
         if st.button(card_text_2, key="btn_search_engine", use_container_width=True):
             st.session_state.current_view = "search_engine"
             st.rerun()
@@ -299,7 +337,11 @@ elif st.session_state.current_view == "search_engine":
     st.title("🔍 Cloud Search Engine")
     st.caption("Bypass network restrictions to query live web answers, read articles, or proxy web pages.")
 
-    search_mode = st.radio("Choose Search Tool:", ["🔎 DuckDuckGo Native", "⚡ Tavily AI Search", "🌐 Unblocked Web Proxy", "📖 Cloud Article Reader"], horizontal=True)
+    search_mode = st.radio(
+        "Choose Search Tool:", 
+        ["🔎 DuckDuckGo Native", "🌐 DuckDuckGo Proxy Search", "⚡ Tavily AI Search", "🌐 Direct Web Proxy", "📖 Cloud Article Reader"], 
+        horizontal=True
+    )
 
     st.markdown("---")
 
@@ -326,7 +368,22 @@ elif st.session_state.current_view == "search_engine":
                 except Exception as e:
                     st.error(f"Search error: {str(e)}")
 
-    # TOOL 2: AI LIVE WEB SEARCH (TAVILY)
+    # TOOL 2: DUCKDUCKGO PROXY SEARCH (SEPARATED OPTION)
+    elif search_mode == "🌐 DuckDuckGo Proxy Search":
+        st.write("Perform search queries directly through a proxied DuckDuckGo HTML layout. External redirects are unwrapped to prevent connection blocks.")
+        
+        ddg_proxy_query = st.text_input("Enter Search Query:", placeholder="e.g. latest technology news", key="ddg_proxy_query_input")
+        load_ddg_proxy_btn = st.button("🚀 Search via Proxy", type="primary")
+
+        if load_ddg_proxy_btn and ddg_proxy_query.strip():
+            target_url = f"https://html.duckduckgo.com/html/?q={requests.utils.quote(ddg_proxy_query)}"
+            with st.spinner("Proxying DuckDuckGo HTML page..."):
+                cleaned_html = fetch_and_clean_html(target_url)
+                if cleaned_html:
+                    st.markdown("---")
+                    st.components.v1.html(cleaned_html, height=800, scrolling=True)
+
+    # TOOL 3: AI LIVE WEB SEARCH (TAVILY)
     elif search_mode == "⚡ Tavily AI Search":
         if not tavily_api_key:
             st.warning("⚠️ `TAVILY_API_KEY` missing in Streamlit Secrets. Please add it to enable live cloud searches.")
@@ -376,54 +433,24 @@ elif st.session_state.current_view == "search_engine":
                     except Exception as e:
                         st.error(f"Search failed: {e}")
 
-    # TOOL 3: UNBLOCKED WEB PROXY (DUCKDUCKGO HTML PARSER INTEGRATION)
-    elif search_mode == "🌐 Unblocked Web Proxy":
-        st.write("Browse the web via DuckDuckGo HTML context. Note: Heavily protected sites like YouTube block standard iframe proxying due to security headers.")
+    # TOOL 4: DIRECT UNBLOCKED WEB PROXY
+    elif search_mode == "🌐 Direct Web Proxy":
+        st.write("Enter a specific URL to proxy and view its rendered HTML content.")
         
-        col_search, col_url = st.columns([1, 1])
-        with col_search:
-            proxy_query = st.text_input("Option A: Search via DuckDuckGo", placeholder="e.g. quantum computing news", key="proxy_query_input")
-        with col_url:
-            target_url = st.text_input("Option B: Direct URL", placeholder="https://en.wikipedia.org/wiki/Main_Page", key="proxy_url_input")
+        target_url = st.text_input("Enter Web Address (URL):", placeholder="https://en.wikipedia.org/wiki/Main_Page", key="proxy_url_input")
+        load_proxy_btn = st.button("🚀 Load Unblocked Page", type="primary")
 
-        load_proxy_btn = st.button("🚀 Fetch Content", type="primary")
+        if load_proxy_btn and target_url.strip():
+            if not target_url.startswith(("http://", "https://")):
+                target_url = "https://" + target_url
 
-        if load_proxy_btn:
-            final_url = ""
-            if proxy_query.strip():
-                final_url = f"https://html.duckduckgo.com/html/?q={requests.utils.quote(proxy_query)}"
-            elif target_url.strip():
-                final_url = target_url if target_url.startswith(("http://", "https://")) else "https://" + target_url
+            with st.spinner("Proxying web page..."):
+                cleaned_html = fetch_and_clean_html(target_url)
+                if cleaned_html:
+                    st.markdown("---")
+                    st.components.v1.html(cleaned_html, height=800, scrolling=True)
 
-            if final_url:
-                with st.spinner("Proxying destination..."):
-                    try:
-                        headers = {
-                            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36"
-                        }
-                        response = requests.get(final_url, headers=headers, timeout=12)
-                        
-                        if response.status_code == 200:
-                            soup = BeautifulSoup(response.text, "html.parser")
-                            
-                            # Rewrite relative image and hyperlink endpoints
-                            for img in soup.find_all("img", src=True):
-                                img["src"] = urljoin(final_url, img["src"])
-                            for a in soup.find_all("a", href=True):
-                                a["href"] = urljoin(final_url, a["href"])
-
-                            # Strip active execution scripts to avoid origin errors
-                            for script in soup(["script"]):
-                                script.decompose()
-
-                            st.markdown("---")
-                            st.components.v1.html(str(soup), height=800, scrolling=True)
-                        else:
-                            st.error(f"Target node rejected request. Server status: {response.status_code}")
-                    except Exception as e:
-                        st.error(f"Proxy Connection Error: {e}")
-
-    # TOOL 4: CLOUD ARTICLE READER
+    # TOOL 5: CLOUD ARTICLE READER
     elif search_mode == "📖 Cloud Article Reader":
         if not tavily_api_key:
             st.warning("⚠️ `TAVILY_API_KEY` missing in Streamlit Secrets. Please add it to enable article extraction.")
