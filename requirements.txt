@@ -1,3 +1,5 @@
 streamlit
-tavily-python
 openai
+tavily-python
+requests
+beautifulsoup4
