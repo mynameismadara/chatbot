@@ -3,3 +3,4 @@ openai
 tavily-python
 requests
 beautifulsoup4
+duckduckgo-search
