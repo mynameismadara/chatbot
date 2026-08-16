@@ -1,8 +1,5 @@
 import streamlit as st
 from openai import OpenAI
-import requests
-from bs4 import BeautifulSoup
-from urllib.parse import urljoin, parse_qs, urlparse
 
 # 1. Page Configuration
 st.set_page_config(page_title="Private Portal", page_icon="🔒", layout="wide")
@@ -11,7 +8,7 @@ st.set_page_config(page_title="Private Portal", page_icon="🔒", layout="wide")
 if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
 if "current_view" not in st.session_state:
-    st.session_state.current_view = "menu"  # Options: 'menu', 'anas_intelligence', 'search_engine'
+    st.session_state.current_view = "menu"  # Options: 'menu', 'anas_intelligence'
 
 if "all_chats" not in st.session_state:
     st.session_state.all_chats = {}  
@@ -38,9 +35,6 @@ try:
 except KeyError:
     st.error("System configuration missing. Access offline.")
     st.stop()
-
-# Initialize Tavily Client if key exists
-tavily_api_key = st.secrets.get("TAVILY_API_KEY", None)
 
 # 3. Password Authentication
 if not st.session_state.authenticated:
@@ -173,50 +167,14 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# Helper function to clean and render proxied HTML content
-def fetch_and_clean_html(target_url):
-    try:
-        headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36"
-        }
-        response = requests.get(target_url, headers=headers, timeout=12)
-        
-        if response.status_code == 200:
-            soup = BeautifulSoup(response.text, "html.parser")
-            
-            # 1. Convert relative image URLs to absolute
-            for img in soup.find_all("img", src=True):
-                img["src"] = urljoin(target_url, img["src"])
-                
-            # 2. Fix redirects and convert relative links to absolute
-            for a in soup.find_all("a", href=True):
-                href = a["href"]
-                if "duckduckgo.com/l/?" in href or href.startswith("/l/?"):
-                    parsed = urlparse(href)
-                    query = parse_qs(parsed.query)
-                    if "uddg" in query:
-                        href = query["uddg"][0]
-                a["href"] = urljoin(target_url, href)
-
-            # 3. Strip script tags to avoid context/origin crashes
-            for script in soup(["script"]):
-                script.decompose()
-
-            return str(soup)
-        else:
-            st.error(f"Target node rejected request. Status Code: {response.status_code}")
-            return None
-    except Exception as e:
-        st.error(f"Proxy Connection Error: {e}")
-        return None
-
 # =====================================================================
-# VIEW 1: ABSOLUTE CENTERED RADIANT MENU (SIDE-BY-SIDE BUTTONS)
+# VIEW 1: ABSOLUTE CENTERED RADIANT MENU (X & Y AXIS LOCKED)
 # =====================================================================
 if st.session_state.current_view == "menu":
     
     st.markdown("""
         <style>
+        /* Target Main Page Container to Center Everything Vertically & Horizontally */
         .main .block-container {
             display: flex !important;
             flex-direction: column !important;
@@ -225,7 +183,7 @@ if st.session_state.current_view == "menu":
             min-height: 85vh !important;
             padding-top: 0rem !important;
             padding-bottom: 0rem !important;
-            max-width: 900px !important;
+            max-width: 1000px !important;
         }
 
         .menu-header {
@@ -239,17 +197,11 @@ if st.session_state.current_view == "menu":
             width: 100%;
         }
 
-        /* Pull layout columns close together */
-        div[data-testid="stHorizontalBlock"] {
-            gap: 12px !important;
-            justify-content: center !important;
-        }
-
+        /* Column Flex Center Lock */
         div[data-testid="stColumn"] {
             display: flex !important;
             justify-content: center !important;
             align-items: center !important;
-            flex: 1 1 0px !important;
         }
 
         div.stButton {
@@ -258,16 +210,16 @@ if st.session_state.current_view == "menu":
             justify-content: center !important;
         }
 
-        /* Style Menu Card Buttons */
+        /* Style Menu Card Button */
         div.stButton > button {
             width: 100% !important;
-            max-width: 380px !important;
+            max-width: 480px !important;
             height: 270px !important;
             background-color: #1E1E2E !important;
             border: 1px solid #313244 !important;
             border-radius: 24px !important;
             color: #CDD6F4 !important;
-            font-size: 22px !important;
+            font-size: 26px !important;
             font-weight: 700 !important;
             white-space: pre-wrap !important;
             box-shadow: 0 8px 28px rgba(0,0,0,0.4) !important;
@@ -301,87 +253,25 @@ if st.session_state.current_view == "menu":
     # 1. Header Title
     st.markdown("<div class='menu-header'>Radiant</div>", unsafe_allow_html=True)
 
-    # 2. Side-by-Side Menu Buttons (Tightly Aligned)
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        card_text_1 = "🤖\n\nAnas Intelligence\n\n💬 Chatbot • 📝 Humanizer\n📊 Summarizer • 🌐 Translator\n🧠 Flashcards"
-        if st.button(card_text_1, key="btn_anas_intelligence", use_container_width=True):
-            st.session_state.current_view = "anas_intelligence"
-            st.rerun()
-
+    # 2. Symmetric Center Column Layout
+    col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
-        card_text_2 = "🌐\n\nSchool Web Proxy\n\n🛡️ Bypass Firewall\n🚀 Unblock YouTube, Games &\nRestricted Sites"
-        if st.button(card_text_2, key="btn_search_engine", use_container_width=True):
-            st.session_state.current_view = "search_engine"
+        card_text = "🤖\n\nAnas Intelligence\n\n💬 Chatbot • 📝 Humanizer\n📊 Summarizer • 🌐 Translator\n🧠 Flashcards"
+        if st.button(card_text, key="btn_anas_intelligence", use_container_width=True):
+            st.session_state.current_view = "anas_intelligence"
             st.rerun()
 
     st.markdown("<div class='footer-text'>2026 made by ?</div>", unsafe_allow_html=True)
 
 # =====================================================================
-# VIEW 2: FULL-PAGE UNBLOCKED SCHOOL WEB PROXY
-# =====================================================================
-elif st.session_state.current_view == "search_engine":
-
-    st.markdown("<style>.main .block-container { padding-top: 1.5rem !important; max-width: 95% !important; }</style>", unsafe_allow_html=True)
-
-    top_col1, top_col2 = st.columns([1, 10])
-    with top_col1:
-        if st.button("🔙 Menu", use_container_width=True):
-            st.session_state.current_view = "menu"
-            st.rerun()
-
-    st.title("🌐 School Bypass Web Proxy")
-    st.caption("Enter any blocked web address (like YouTube, games, or social media) to view and navigate it seamlessly right through this unblocked server.")
-
-    st.markdown("---")
-
-    # Quick preset buttons for common sites
-    st.markdown("**Quick Launch:**")
-    col_q1, col_q2, col_q3, col_q4 = st.columns(4)
-    
-    if "proxy_url_input_val" not in st.session_state:
-        st.session_state.proxy_url_input_val = "https://www.youtube.com"
-
-    with col_q1:
-        if st.button("🔴 YouTube", use_container_width=True):
-            st.session_state.proxy_url_input_val = "https://www.youtube.com"
-    with col_q2:
-        if st.button("🎮 CrazyGames", use_container_width=True):
-            st.session_state.proxy_url_input_val = "https://www.crazygames.com"
-    with col_q3:
-        if st.button("🔵 Reddit", use_container_width=True):
-            st.session_state.proxy_url_input_val = "https://www.reddit.com"
-    with col_q4:
-        if st.button("🟢 GitHub", use_container_width=True):
-            st.session_state.proxy_url_input_val = "https://github.com"
-
-    target_url = st.text_input("Enter Web Address (URL):", value=st.session_state.proxy_url_input_val, placeholder="https://www.youtube.com", key="proxy_url_input")
-    load_proxy_btn = st.button("🚀 Load Unblocked Page", type="primary", use_container_width=True)
-
-    if load_proxy_btn and target_url.strip():
-        if not target_url.startswith(("http://", "https://")):
-            target_url = "https://" + target_url
-
-        st.session_state.proxy_url_input_val = target_url
-
-        with st.spinner(f"Bypassing school filters to load {target_url}..."):
-            cleaned_html = fetch_and_clean_html(target_url)
-            if cleaned_html:
-                st.markdown("---")
-                st.success("✅ Page proxied successfully! Note: Heavily script-locked sites like active video streaming on YouTube might require standard desktop layout or act as a reader frame depending on school firewall policies.")
-                st.components.v1.html(cleaned_html, height=850, scrolling=True)
-            else:
-                st.error("⚠️ Failed to load or render the target website. The domain might block proxy embedding headers.")
-
-# =====================================================================
-# VIEW 3: FULL ANAS INTELLIGENCE SUITE
+# VIEW 2: FULL ANAS INTELLIGENCE SUITE
 # =====================================================================
 elif st.session_state.current_view == "anas_intelligence":
 
+    # Padding reset for standard views
     st.markdown("<style>.main .block-container { padding-top: 2rem !important; max-width: 1200px !important; }</style>", unsafe_allow_html=True)
 
-    # Sidebar Navigation
+    # 5. Sidebar Navigation
     with st.sidebar:
         if st.button("🔙 Exit to Menu", use_container_width=True):
             st.session_state.current_view = "menu"
