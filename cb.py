@@ -3,6 +3,7 @@ from openai import OpenAI
 import requests
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin
+from duckduckgo_search import DDGS
 
 # 1. Page Configuration
 st.set_page_config(page_title="Private Portal", page_icon="🔒", layout="wide")
@@ -188,7 +189,7 @@ if st.session_state.current_view == "menu":
             min-height: 85vh !important;
             padding-top: 0rem !important;
             padding-bottom: 0rem !important;
-            max-width: 1100px !important;
+            max-width: 900px !important;
         }
 
         .menu-header {
@@ -202,11 +203,17 @@ if st.session_state.current_view == "menu":
             width: 100%;
         }
 
-        /* Column Flex Center Lock */
+        /* Pull layout columns close together */
+        div[data-testid="stHorizontalBlock"] {
+            gap: 12px !important;
+            justify-content: center !important;
+        }
+
         div[data-testid="stColumn"] {
             display: flex !important;
             justify-content: center !important;
             align-items: center !important;
+            flex: 1 1 0px !important;
         }
 
         div.stButton {
@@ -218,13 +225,13 @@ if st.session_state.current_view == "menu":
         /* Style Menu Card Buttons */
         div.stButton > button {
             width: 100% !important;
-            max-width: 440px !important;
+            max-width: 380px !important;
             height: 270px !important;
             background-color: #1E1E2E !important;
             border: 1px solid #313244 !important;
             border-radius: 24px !important;
             color: #CDD6F4 !important;
-            font-size: 24px !important;
+            font-size: 22px !important;
             font-weight: 700 !important;
             white-space: pre-wrap !important;
             box-shadow: 0 8px 28px rgba(0,0,0,0.4) !important;
@@ -258,8 +265,8 @@ if st.session_state.current_view == "menu":
     # 1. Header Title
     st.markdown("<div class='menu-header'>Radiant</div>", unsafe_allow_html=True)
 
-    # 2. Side-by-Side Menu Buttons
-    col1, col2 = st.columns(2, gap="large")
+    # 2. Side-by-Side Menu Buttons (Tightly Aligned)
+    col1, col2 = st.columns(2)
     
     with col1:
         card_text_1 = "🤖\n\nAnas Intelligence\n\n💬 Chatbot • 📝 Humanizer\n📊 Summarizer • 🌐 Translator\n🧠 Flashcards"
@@ -268,7 +275,7 @@ if st.session_state.current_view == "menu":
             st.rerun()
 
     with col2:
-        card_text_2 = "🔍\n\nSearch Engine\n\n⚡ AI Web Search\n🌐 Unblocked Proxy\n📖 Cloud Reader"
+        card_text_2 = "🔍\n\nSearch Engine\n\n🔎 DuckDuckGo • ⚡ Tavily AI\n🌐 Web Proxy • 📖 Reader"
         if st.button(card_text_2, key="btn_search_engine", use_container_width=True):
             st.session_state.current_view = "search_engine"
             st.rerun()
@@ -292,12 +299,35 @@ elif st.session_state.current_view == "search_engine":
     st.title("🔍 Cloud Search Engine")
     st.caption("Bypass network restrictions to query live web answers, read articles, or proxy web pages.")
 
-    search_mode = st.radio("Choose Search Tool:", ["⚡ AI Live Web Search", "🌐 Unblocked Web Proxy", "📖 Cloud Article Reader"], horizontal=True)
+    search_mode = st.radio("Choose Search Tool:", ["🔎 DuckDuckGo Native", "⚡ Tavily AI Search", "🌐 Unblocked Web Proxy", "📖 Cloud Article Reader"], horizontal=True)
 
     st.markdown("---")
 
-    # TOOL 1: AI LIVE WEB SEARCH (TAVILY)
-    if search_mode == "⚡ AI Live Web Search":
+    # TOOL 1: DUCKDUCKGO NATIVE SEARCH
+    if search_mode == "🔎 DuckDuckGo Native":
+        with st.form(key="ddg_search_form"):
+            ddg_query = st.text_input("Enter Search Query:", placeholder="e.g. Python programming or global news", key="ddg_input")
+            ddg_submit = st.form_submit_button(label="Search Web", type="primary")
+
+        if ddg_submit and ddg_query.strip():
+            with st.spinner("Fetching DuckDuckGo search results..."):
+                try:
+                    results = list(DDGS().text(ddg_query, max_results=10))
+
+                    if results:
+                        st.subheader(f"Results for: '{ddg_query}'")
+                        for item in results:
+                            st.markdown(f"### [{item['title']}]({item['href']})")
+                            st.write(item['body'])
+                            st.caption(f"Source: {item['href']}")
+                            st.write("")
+                    else:
+                        st.warning("No results found. Try a different search term.")
+                except Exception as e:
+                    st.error(f"Search error: {str(e)}")
+
+    # TOOL 2: AI LIVE WEB SEARCH (TAVILY)
+    elif search_mode == "⚡ Tavily AI Search":
         if not tavily_api_key:
             st.warning("⚠️ `TAVILY_API_KEY` missing in Streamlit Secrets. Please add it to enable live cloud searches.")
         else:
@@ -346,7 +376,7 @@ elif st.session_state.current_view == "search_engine":
                     except Exception as e:
                         st.error(f"Search failed: {e}")
 
-    # TOOL 2: UNBLOCKED WEB PROXY
+    # TOOL 3: UNBLOCKED WEB PROXY
     elif search_mode == "🌐 Unblocked Web Proxy":
         st.write("Enter any website URL below to fetch and render its HTML content server-side.")
         
@@ -383,7 +413,7 @@ elif st.session_state.current_view == "search_engine":
                 except Exception as e:
                     st.error(f"Proxy Connection Error: {e}")
 
-    # TOOL 3: CLOUD ARTICLE READER
+    # TOOL 4: CLOUD ARTICLE READER
     elif search_mode == "📖 Cloud Article Reader":
         if not tavily_api_key:
             st.warning("⚠️ `TAVILY_API_KEY` missing in Streamlit Secrets. Please add it to enable article extraction.")
