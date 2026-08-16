@@ -3,7 +3,6 @@ from openai import OpenAI
 import requests
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin, parse_qs, urlparse
-from duckduckgo_search import DDGS
 
 # 1. Page Configuration
 st.set_page_config(page_title="Private Portal", page_icon="🔒", layout="wide")
@@ -189,10 +188,9 @@ def fetch_and_clean_html(target_url):
             for img in soup.find_all("img", src=True):
                 img["src"] = urljoin(target_url, img["src"])
                 
-            # 2. Fix DuckDuckGo redirects and convert relative links to absolute
+            # 2. Fix redirects and convert relative links to absolute
             for a in soup.find_all("a", href=True):
                 href = a["href"]
-                # Resolve DuckDuckGo redirect parameters to direct target URLs
                 if "duckduckgo.com/l/?" in href or href.startswith("/l/?"):
                     parsed = urlparse(href)
                     query = parse_qs(parsed.query)
@@ -313,7 +311,7 @@ if st.session_state.current_view == "menu":
             st.rerun()
 
     with col2:
-        card_text_2 = "🔍\n\nSearch Engine\n\n🔎 DDG Native • 🌐 DDG Proxy\n⚡ Tavily AI • 🌐 Direct Proxy\n📖 Reader"
+        card_text_2 = "🌐\n\nSchool Web Proxy\n\n🛡️ Bypass Firewall\n🚀 Unblock YouTube, Games &\nRestricted Sites"
         if st.button(card_text_2, key="btn_search_engine", use_container_width=True):
             st.session_state.current_view = "search_engine"
             st.rerun()
@@ -321,11 +319,10 @@ if st.session_state.current_view == "menu":
     st.markdown("<div class='footer-text'>2026 made by ?</div>", unsafe_allow_html=True)
 
 # =====================================================================
-# VIEW 2: FULL-PAGE UNBLOCKED SEARCH ENGINE
+# VIEW 2: FULL-PAGE UNBLOCKED SCHOOL WEB PROXY
 # =====================================================================
 elif st.session_state.current_view == "search_engine":
 
-    # Full page wide layout setup
     st.markdown("<style>.main .block-container { padding-top: 1.5rem !important; max-width: 95% !important; }</style>", unsafe_allow_html=True)
 
     top_col1, top_col2 = st.columns([1, 10])
@@ -334,146 +331,48 @@ elif st.session_state.current_view == "search_engine":
             st.session_state.current_view = "menu"
             st.rerun()
 
-    st.title("🔍 Cloud Search Engine")
-    st.caption("Bypass network restrictions to query live web answers, read articles, or proxy web pages.")
-
-    search_mode = st.radio(
-        "Choose Search Tool:", 
-        ["🔎 DuckDuckGo Native", "🌐 DuckDuckGo Proxy Search", "⚡ Tavily AI Search", "🌐 Direct Web Proxy", "📖 Cloud Article Reader"], 
-        horizontal=True
-    )
+    st.title("🌐 School Bypass Web Proxy")
+    st.caption("Enter any blocked web address (like YouTube, games, or social media) to view and navigate it seamlessly right through this unblocked server.")
 
     st.markdown("---")
 
-    # TOOL 1: DUCKDUCKGO NATIVE SEARCH
-    if search_mode == "🔎 DuckDuckGo Native":
-        with st.form(key="ddg_search_form"):
-            ddg_query = st.text_input("Enter Search Query:", placeholder="e.g. Python programming or global news", key="ddg_input")
-            ddg_submit = st.form_submit_button(label="Search Web", type="primary")
+    # Quick preset buttons for common sites
+    st.markdown("**Quick Launch:**")
+    col_q1, col_q2, col_q3, col_q4 = st.columns(4)
+    
+    if "proxy_url_input_val" not in st.session_state:
+        st.session_state.proxy_url_input_val = "https://www.youtube.com"
 
-        if ddg_submit and ddg_query.strip():
-            with st.spinner("Fetching DuckDuckGo search results..."):
-                try:
-                    results = list(DDGS().text(ddg_query, max_results=10))
+    with col_q1:
+        if st.button("🔴 YouTube", use_container_width=True):
+            st.session_state.proxy_url_input_val = "https://www.youtube.com"
+    with col_q2:
+        if st.button("🎮 CrazyGames", use_container_width=True):
+            st.session_state.proxy_url_input_val = "https://www.crazygames.com"
+    with col_q3:
+        if st.button("🔵 Reddit", use_container_width=True):
+            st.session_state.proxy_url_input_val = "https://www.reddit.com"
+    with col_q4:
+        if st.button("🟢 GitHub", use_container_width=True):
+            st.session_state.proxy_url_input_val = "https://github.com"
 
-                    if results:
-                        st.subheader(f"Results for: '{ddg_query}'")
-                        for item in results:
-                            st.markdown(f"### [{item['title']}]({item['href']})")
-                            st.write(item['body'])
-                            st.caption(f"Source: {item['href']}")
-                            st.write("")
-                    else:
-                        st.warning("No results found. Try a different search term.")
-                except Exception as e:
-                    st.error(f"Search error: {str(e)}")
+    target_url = st.text_input("Enter Web Address (URL):", value=st.session_state.proxy_url_input_val, placeholder="https://www.youtube.com", key="proxy_url_input")
+    load_proxy_btn = st.button("🚀 Load Unblocked Page", type="primary", use_container_width=True)
 
-    # TOOL 2: DUCKDUCKGO PROXY SEARCH (SEPARATED OPTION)
-    elif search_mode == "🌐 DuckDuckGo Proxy Search":
-        st.write("Perform search queries directly through a proxied DuckDuckGo HTML layout. External redirects are unwrapped to prevent connection blocks.")
-        
-        ddg_proxy_query = st.text_input("Enter Search Query:", placeholder="e.g. latest technology news", key="ddg_proxy_query_input")
-        load_ddg_proxy_btn = st.button("🚀 Search via Proxy", type="primary")
+    if load_proxy_btn and target_url.strip():
+        if not target_url.startswith(("http://", "https://")):
+            target_url = "https://" + target_url
 
-        if load_ddg_proxy_btn and ddg_proxy_query.strip():
-            target_url = f"https://html.duckduckgo.com/html/?q={requests.utils.quote(ddg_proxy_query)}"
-            with st.spinner("Proxying DuckDuckGo HTML page..."):
-                cleaned_html = fetch_and_clean_html(target_url)
-                if cleaned_html:
-                    st.markdown("---")
-                    st.components.v1.html(cleaned_html, height=800, scrolling=True)
+        st.session_state.proxy_url_input_val = target_url
 
-    # TOOL 3: AI LIVE WEB SEARCH (TAVILY)
-    elif search_mode == "⚡ Tavily AI Search":
-        if not tavily_api_key:
-            st.warning("⚠️ `TAVILY_API_KEY` missing in Streamlit Secrets. Please add it to enable live cloud searches.")
-        else:
-            from tavily import TavilyClient
-            tavily_client = TavilyClient(api_key=tavily_api_key)
-
-            search_query = st.text_input("Enter Topic, Question, or News Query:", placeholder="e.g., What are the latest developments in quantum computing?", key="tavily_query")
-            
-            col_search, col_depth = st.columns([4, 1])
-            with col_search:
-                run_search = st.button("🚀 Search Web", type="primary", use_container_width=True)
-            with col_depth:
-                depth_val = st.selectbox("Depth:", ["basic", "advanced"], key="search_depth_select")
-
-            if run_search and search_query.strip():
-                st.session_state.stop_generation = False
-                with st.spinner("Fetching live web data via cloud..."):
-                    try:
-                        res = tavily_client.search(query=search_query, search_depth=depth_val, max_results=6)
-                        
-                        web_snippets = ""
-                        for item in res.get("results", []):
-                            web_snippets += f"• **Title:** {item['title']}\n  **URL:** {item['url']}\n  **Snippet:** {item['content']}\n\n"
-
-                        st.markdown("### 📋 AI Summarized Answer")
-                        ans_container = st.container(border=True)
-                        with ans_container:
-                            placeholder = st.empty()
-                            
-                            system_prompt = (
-                                f"{GEMINI_FORMATTING_PROMPT}\n\n"
-                                "You are a world-class web researcher. Use the provided real-time search context "
-                                "to write an accurate, highly structured, and readable answer. Cite source URLs where applicable."
-                            )
-                            user_prompt = f"User Question: {search_query}\n\nLive Search Data:\n{web_snippets}"
-                            
-                            payload = [
-                                {"role": "system", "content": system_prompt},
-                                {"role": "user", "content": user_prompt}
-                            ]
-                            run_ai_stream(payload, placeholder)
-
-                        with st.expander("🔗 Source Links Found"):
-                            for item in res.get("results", []):
-                                st.markdown(f"- **[{item['title']}]({item['url']})**")
-                    except Exception as e:
-                        st.error(f"Search failed: {e}")
-
-    # TOOL 4: DIRECT UNBLOCKED WEB PROXY
-    elif search_mode == "🌐 Direct Web Proxy":
-        st.write("Enter a specific URL to proxy and view its rendered HTML content.")
-        
-        target_url = st.text_input("Enter Web Address (URL):", placeholder="https://en.wikipedia.org/wiki/Main_Page", key="proxy_url_input")
-        load_proxy_btn = st.button("🚀 Load Unblocked Page", type="primary")
-
-        if load_proxy_btn and target_url.strip():
-            if not target_url.startswith(("http://", "https://")):
-                target_url = "https://" + target_url
-
-            with st.spinner("Proxying web page..."):
-                cleaned_html = fetch_and_clean_html(target_url)
-                if cleaned_html:
-                    st.markdown("---")
-                    st.components.v1.html(cleaned_html, height=800, scrolling=True)
-
-    # TOOL 5: CLOUD ARTICLE READER
-    elif search_mode == "📖 Cloud Article Reader":
-        if not tavily_api_key:
-            st.warning("⚠️ `TAVILY_API_KEY` missing in Streamlit Secrets. Please add it to enable article extraction.")
-        else:
-            from tavily import TavilyClient
-            tavily_client = TavilyClient(api_key=tavily_api_key)
-
-            article_url = st.text_input("Paste Article / Webpage URL:", placeholder="https://en.wikipedia.org/wiki/Computer_science", key="extract_url_input")
-            extract_btn = st.button("📖 Extract Full Article", type="primary")
-
-            if extract_btn and article_url.strip():
-                with st.spinner("Extracting content from cloud..."):
-                    try:
-                        ext_res = tavily_client.extract(urls=[article_url])
-                        if ext_res.get("results"):
-                            raw_text = ext_res["results"][0]["raw_content"]
-                            st.markdown("---")
-                            with st.container(border=True):
-                                st.markdown(raw_text[:15000])
-                        else:
-                            st.warning("Could not extract clean text from this link.")
-                    except Exception as e:
-                        st.error(f"Extraction Error: {e}")
+        with st.spinner(f"Bypassing school filters to load {target_url}..."):
+            cleaned_html = fetch_and_clean_html(target_url)
+            if cleaned_html:
+                st.markdown("---")
+                st.success("✅ Page proxied successfully! Note: Heavily script-locked sites like active video streaming on YouTube might require standard desktop layout or act as a reader frame depending on school firewall policies.")
+                st.components.v1.html(cleaned_html, height=850, scrolling=True)
+            else:
+                st.error("⚠️ Failed to load or render the target website. The domain might block proxy embedding headers.")
 
 # =====================================================================
 # VIEW 3: FULL ANAS INTELLIGENCE SUITE
