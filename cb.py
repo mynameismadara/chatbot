@@ -1,5 +1,8 @@
 import streamlit as st
 from openai import OpenAI
+import requests
+from bs4 import BeautifulSoup
+from urllib.parse import urljoin
 
 # 1. Page Configuration
 st.set_page_config(page_title="Private Portal", page_icon="🔒", layout="wide")
@@ -8,7 +11,7 @@ st.set_page_config(page_title="Private Portal", page_icon="🔒", layout="wide")
 if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
 if "current_view" not in st.session_state:
-    st.session_state.current_view = "menu"  # Options: 'menu', 'anas_intelligence'
+    st.session_state.current_view = "menu"  # Options: 'menu', 'anas_intelligence', 'search_engine'
 
 if "all_chats" not in st.session_state:
     st.session_state.all_chats = {}  
@@ -35,6 +38,9 @@ try:
 except KeyError:
     st.error("System configuration missing. Access offline.")
     st.stop()
+
+# Initialize Tavily Client if key exists
+tavily_api_key = st.secrets.get("TAVILY_API_KEY", None)
 
 # 3. Password Authentication
 if not st.session_state.authenticated:
@@ -168,13 +174,12 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # =====================================================================
-# VIEW 1: ABSOLUTE CENTERED RADIANT MENU (X & Y AXIS LOCKED)
+# VIEW 1: ABSOLUTE CENTERED RADIANT MENU (SIDE-BY-SIDE BUTTONS)
 # =====================================================================
 if st.session_state.current_view == "menu":
     
     st.markdown("""
         <style>
-        /* Target Main Page Container to Center Everything Vertically & Horizontally */
         .main .block-container {
             display: flex !important;
             flex-direction: column !important;
@@ -183,7 +188,7 @@ if st.session_state.current_view == "menu":
             min-height: 85vh !important;
             padding-top: 0rem !important;
             padding-bottom: 0rem !important;
-            max-width: 1000px !important;
+            max-width: 1100px !important;
         }
 
         .menu-header {
@@ -210,16 +215,16 @@ if st.session_state.current_view == "menu":
             justify-content: center !important;
         }
 
-        /* Style Menu Card Button */
+        /* Style Menu Card Buttons */
         div.stButton > button {
             width: 100% !important;
-            max-width: 480px !important;
+            max-width: 440px !important;
             height: 270px !important;
             background-color: #1E1E2E !important;
             border: 1px solid #313244 !important;
             border-radius: 24px !important;
             color: #CDD6F4 !important;
-            font-size: 26px !important;
+            font-size: 24px !important;
             font-weight: 700 !important;
             white-space: pre-wrap !important;
             box-shadow: 0 8px 28px rgba(0,0,0,0.4) !important;
@@ -253,25 +258,164 @@ if st.session_state.current_view == "menu":
     # 1. Header Title
     st.markdown("<div class='menu-header'>Radiant</div>", unsafe_allow_html=True)
 
-    # 2. Symmetric Center Column Layout
-    col1, col2, col3 = st.columns([1, 2, 1])
-    with col2:
-        card_text = "🤖\n\nAnas Intelligence\n\n💬 Chatbot • 📝 Humanizer\n📊 Summarizer • 🌐 Translator\n🧠 Flashcards"
-        if st.button(card_text, key="btn_anas_intelligence", use_container_width=True):
+    # 2. Side-by-Side Menu Buttons
+    col1, col2 = st.columns(2, gap="large")
+    
+    with col1:
+        card_text_1 = "🤖\n\nAnas Intelligence\n\n💬 Chatbot • 📝 Humanizer\n📊 Summarizer • 🌐 Translator\n🧠 Flashcards"
+        if st.button(card_text_1, key="btn_anas_intelligence", use_container_width=True):
             st.session_state.current_view = "anas_intelligence"
+            st.rerun()
+
+    with col2:
+        card_text_2 = "🔍\n\nSearch Engine\n\n⚡ AI Web Search\n🌐 Unblocked Proxy\n📖 Cloud Reader"
+        if st.button(card_text_2, key="btn_search_engine", use_container_width=True):
+            st.session_state.current_view = "search_engine"
             st.rerun()
 
     st.markdown("<div class='footer-text'>2026 made by ?</div>", unsafe_allow_html=True)
 
 # =====================================================================
-# VIEW 2: FULL ANAS INTELLIGENCE SUITE
+# VIEW 2: FULL-PAGE UNBLOCKED SEARCH ENGINE
+# =====================================================================
+elif st.session_state.current_view == "search_engine":
+
+    # Full page wide layout setup
+    st.markdown("<style>.main .block-container { padding-top: 1.5rem !important; max-width: 95% !important; }</style>", unsafe_allow_html=True)
+
+    top_col1, top_col2 = st.columns([1, 10])
+    with top_col1:
+        if st.button("🔙 Menu", use_container_width=True):
+            st.session_state.current_view = "menu"
+            st.rerun()
+
+    st.title("🔍 Cloud Search Engine")
+    st.caption("Bypass network restrictions to query live web answers, read articles, or proxy web pages.")
+
+    search_mode = st.radio("Choose Search Tool:", ["⚡ AI Live Web Search", "🌐 Unblocked Web Proxy", "📖 Cloud Article Reader"], horizontal=True)
+
+    st.markdown("---")
+
+    # TOOL 1: AI LIVE WEB SEARCH (TAVILY)
+    if search_mode == "⚡ AI Live Web Search":
+        if not tavily_api_key:
+            st.warning("⚠️ `TAVILY_API_KEY` missing in Streamlit Secrets. Please add it to enable live cloud searches.")
+        else:
+            from tavily import TavilyClient
+            tavily_client = TavilyClient(api_key=tavily_api_key)
+
+            search_query = st.text_input("Enter Topic, Question, or News Query:", placeholder="e.g., What are the latest developments in quantum computing?", key="tavily_query")
+            
+            col_search, col_depth = st.columns([4, 1])
+            with col_search:
+                run_search = st.button("🚀 Search Web", type="primary", use_container_width=True)
+            with col_depth:
+                depth_val = st.selectbox("Depth:", ["basic", "advanced"], key="search_depth_select")
+
+            if run_search and search_query.strip():
+                st.session_state.stop_generation = False
+                with st.spinner("Fetching live web data via cloud..."):
+                    try:
+                        res = tavily_client.search(query=search_query, search_depth=depth_val, max_results=6)
+                        
+                        web_snippets = ""
+                        for item in res.get("results", []):
+                            web_snippets += f"• **Title:** {item['title']}\n  **URL:** {item['url']}\n  **Snippet:** {item['content']}\n\n"
+
+                        st.markdown("### 📋 AI Summarized Answer")
+                        ans_container = st.container(border=True)
+                        with ans_container:
+                            placeholder = st.empty()
+                            
+                            system_prompt = (
+                                f"{GEMINI_FORMATTING_PROMPT}\n\n"
+                                "You are a world-class web researcher. Use the provided real-time search context "
+                                "to write an accurate, highly structured, and readable answer. Cite source URLs where applicable."
+                            )
+                            user_prompt = f"User Question: {search_query}\n\nLive Search Data:\n{web_snippets}"
+                            
+                            payload = [
+                                {"role": "system", "content": system_prompt},
+                                {"role": "user", "content": user_prompt}
+                            ]
+                            run_ai_stream(payload, placeholder)
+
+                        with st.expander("🔗 Source Links Found"):
+                            for item in res.get("results", []):
+                                st.markdown(f"- **[{item['title']}]({item['url']})**")
+                    except Exception as e:
+                        st.error(f"Search failed: {e}")
+
+    # TOOL 2: UNBLOCKED WEB PROXY
+    elif search_mode == "🌐 Unblocked Web Proxy":
+        st.write("Enter any website URL below to fetch and render its HTML content server-side.")
+        
+        target_url = st.text_input("Enter Web Address (URL):", placeholder="https://en.wikipedia.org/wiki/Main_Page", key="proxy_url_input")
+        load_proxy_btn = st.button("🚀 Load Unblocked Page", type="primary")
+
+        if load_proxy_btn and target_url.strip():
+            if not target_url.startswith(("http://", "https://")):
+                target_url = "https://" + target_url
+
+            with st.spinner("Fetching page on cloud server..."):
+                try:
+                    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
+                    response = requests.get(target_url, headers=headers, timeout=12)
+                    
+                    if response.status_code == 200:
+                        soup = BeautifulSoup(response.text, "html.parser")
+                        
+                        # Fix relative links and images
+                        for img in soup.find_all("img", src=True):
+                            img["src"] = urljoin(target_url, img["src"])
+                        for a in soup.find_all("a", href=True):
+                            a["href"] = urljoin(target_url, a["href"])
+
+                        # Strip script tags for clean sandbox execution
+                        for script in soup(["script"]):
+                            script.decompose()
+
+                        st.markdown("---")
+                        # Full-width component frame
+                        st.components.v1.html(str(soup), height=800, scrolling=True)
+                    else:
+                        st.error(f"Could not load page. Server returned status code: {response.status_code}")
+                except Exception as e:
+                    st.error(f"Proxy Connection Error: {e}")
+
+    # TOOL 3: CLOUD ARTICLE READER
+    elif search_mode == "📖 Cloud Article Reader":
+        if not tavily_api_key:
+            st.warning("⚠️ `TAVILY_API_KEY` missing in Streamlit Secrets. Please add it to enable article extraction.")
+        else:
+            from tavily import TavilyClient
+            tavily_client = TavilyClient(api_key=tavily_api_key)
+
+            article_url = st.text_input("Paste Article / Webpage URL:", placeholder="https://en.wikipedia.org/wiki/Computer_science", key="extract_url_input")
+            extract_btn = st.button("📖 Extract Full Article", type="primary")
+
+            if extract_btn and article_url.strip():
+                with st.spinner("Extracting content from cloud..."):
+                    try:
+                        ext_res = tavily_client.extract(urls=[article_url])
+                        if ext_res.get("results"):
+                            raw_text = ext_res["results"][0]["raw_content"]
+                            st.markdown("---")
+                            with st.container(border=True):
+                                st.markdown(raw_text[:15000])
+                        else:
+                            st.warning("Could not extract clean text from this link.")
+                    except Exception as e:
+                        st.error(f"Extraction Error: {e}")
+
+# =====================================================================
+# VIEW 3: FULL ANAS INTELLIGENCE SUITE
 # =====================================================================
 elif st.session_state.current_view == "anas_intelligence":
 
-    # Padding reset for standard views
     st.markdown("<style>.main .block-container { padding-top: 2rem !important; max-width: 1200px !important; }</style>", unsafe_allow_html=True)
 
-    # 5. Sidebar Navigation
+    # Sidebar Navigation
     with st.sidebar:
         if st.button("🔙 Exit to Menu", use_container_width=True):
             st.session_state.current_view = "menu"
