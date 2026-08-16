@@ -376,42 +376,52 @@ elif st.session_state.current_view == "search_engine":
                     except Exception as e:
                         st.error(f"Search failed: {e}")
 
-    # TOOL 3: UNBLOCKED WEB PROXY
+    # TOOL 3: UNBLOCKED WEB PROXY (DUCKDUCKGO HTML PARSER INTEGRATION)
     elif search_mode == "🌐 Unblocked Web Proxy":
-        st.write("Enter any website URL below to fetch and render its HTML content server-side.")
+        st.write("Browse the web via DuckDuckGo HTML context. Note: Heavily protected sites like YouTube block standard iframe proxying due to security headers.")
         
-        target_url = st.text_input("Enter Web Address (URL):", placeholder="https://en.wikipedia.org/wiki/Main_Page", key="proxy_url_input")
-        load_proxy_btn = st.button("🚀 Load Unblocked Page", type="primary")
+        col_search, col_url = st.columns([1, 1])
+        with col_search:
+            proxy_query = st.text_input("Option A: Search via DuckDuckGo", placeholder="e.g. quantum computing news", key="proxy_query_input")
+        with col_url:
+            target_url = st.text_input("Option B: Direct URL", placeholder="https://en.wikipedia.org/wiki/Main_Page", key="proxy_url_input")
 
-        if load_proxy_btn and target_url.strip():
-            if not target_url.startswith(("http://", "https://")):
-                target_url = "https://" + target_url
+        load_proxy_btn = st.button("🚀 Fetch Content", type="primary")
 
-            with st.spinner("Fetching page on cloud server..."):
-                try:
-                    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
-                    response = requests.get(target_url, headers=headers, timeout=12)
-                    
-                    if response.status_code == 200:
-                        soup = BeautifulSoup(response.text, "html.parser")
+        if load_proxy_btn:
+            final_url = ""
+            if proxy_query.strip():
+                final_url = f"https://html.duckduckgo.com/html/?q={requests.utils.quote(proxy_query)}"
+            elif target_url.strip():
+                final_url = target_url if target_url.startswith(("http://", "https://")) else "https://" + target_url
+
+            if final_url:
+                with st.spinner("Proxying destination..."):
+                    try:
+                        headers = {
+                            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36"
+                        }
+                        response = requests.get(final_url, headers=headers, timeout=12)
                         
-                        # Fix relative links and images
-                        for img in soup.find_all("img", src=True):
-                            img["src"] = urljoin(target_url, img["src"])
-                        for a in soup.find_all("a", href=True):
-                            a["href"] = urljoin(target_url, a["href"])
+                        if response.status_code == 200:
+                            soup = BeautifulSoup(response.text, "html.parser")
+                            
+                            # Rewrite relative image and hyperlink endpoints
+                            for img in soup.find_all("img", src=True):
+                                img["src"] = urljoin(final_url, img["src"])
+                            for a in soup.find_all("a", href=True):
+                                a["href"] = urljoin(final_url, a["href"])
 
-                        # Strip script tags for clean sandbox execution
-                        for script in soup(["script"]):
-                            script.decompose()
+                            # Strip active execution scripts to avoid origin errors
+                            for script in soup(["script"]):
+                                script.decompose()
 
-                        st.markdown("---")
-                        # Full-width component frame
-                        st.components.v1.html(str(soup), height=800, scrolling=True)
-                    else:
-                        st.error(f"Could not load page. Server returned status code: {response.status_code}")
-                except Exception as e:
-                    st.error(f"Proxy Connection Error: {e}")
+                            st.markdown("---")
+                            st.components.v1.html(str(soup), height=800, scrolling=True)
+                        else:
+                            st.error(f"Target node rejected request. Server status: {response.status_code}")
+                    except Exception as e:
+                        st.error(f"Proxy Connection Error: {e}")
 
     # TOOL 4: CLOUD ARTICLE READER
     elif search_mode == "📖 Cloud Article Reader":
